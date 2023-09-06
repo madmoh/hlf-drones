@@ -1,0 +1,7 @@
+Followed pre-requists (https://hyperledger-fabric.readthedocs.io/en/latest/prereqs.html)
+	Installed docker, docker-compose, go, jq
+
+Followed fabric installation (https://hyperledger-fabric.readthedocs.io/en/latest/install.html)
+	Used installation script with options d b s
+	Ran docker container list --all --format "table {{.ID}}\t{{.Image}}\t{{.Names}}\t{{.Ports}}"
+
