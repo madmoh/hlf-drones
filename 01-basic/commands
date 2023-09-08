@@ -1,8 +1,0 @@
-Followed pre-requists (https://hyperledger-fabric.readthedocs.io/en/latest/prereqs.html)
-	Installed git, curl, docker, docker-compose, go, jq
-
-Followed fabric installation (https://hyperledger-fabric.readthedocs.io/en/latest/install.html)
-	Used installation script with options d b s
-	Ran a sample network
-	Monitored the network using ctop
-
