@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
@@ -16,11 +16,11 @@ type SmartContract struct {
 // Defining cars
 type Car struct {
 	Color string `json:"Color"`
-	Doors int `json:"Doors"`
-	Make string `json:"Make"`
+	Doors int    `json:"Doors"`
+	Make  string `json:"Make"`
 	Owner string `json:"Owner"`
-	Value int `json:"Value"`
-	VIN string `json:"VIN"`
+	Value int    `json:"Value"`
+	VIN   string `json:"VIN"`
 }
 
 // Inititalizing smart contract with fixed set of cars
@@ -55,13 +55,13 @@ func (s *SmartContract) CreateCar(ctx contractapi.TransactionContextInterface, c
 		return fmt.Errorf("the car %s already exists", vin)
 	}
 	// Create the car struct and JSON
-	car := Car {
+	car := Car{
 		Color: color,
 		Doors: doors,
-		Make: make,
+		Make:  make,
 		Owner: owner,
 		Value: value,
-		VIN: vin,
+		VIN:   vin,
 	}
 	carJSON, err := json.Marshal(car)
 	if err != nil {
@@ -98,13 +98,13 @@ func (s *SmartContract) UpdateCar(ctx contractapi.TransactionContextInterface, c
 		return fmt.Errorf("the car %s does not exist", vin)
 	}
 	// Overwrite original car
-	car := Car {
+	car := Car{
 		Color: color,
 		Doors: doors,
-		Make: make,
+		Make:  make,
 		Owner: owner,
 		Value: value,
-		VIN: vin,
+		VIN:   vin,
 	}
 	carJSON, err := json.Marshal(car)
 	if err != nil {
