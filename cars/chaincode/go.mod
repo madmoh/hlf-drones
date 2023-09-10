@@ -1,4 +1,4 @@
-module github.com/madmoh/hlf-tuts/01-basic/chaincode
+module madmoh/hlf-cars
 
 go 1.20
 
