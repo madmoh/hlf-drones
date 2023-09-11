@@ -14,5 +14,3 @@ Followed chaincode deployment (https://hyperledger-fabric.readthedocs.io/en/late
 	Instead of GO111MODULE=on... I Used go mod init github.com/madmoh/hlf-tuts
 	Ran mod init, go mod tidy, go mod vendor
 	Downgraded project to go 1.20 using go get go@1.20
-	Deployed using
-		./network.sh deployCC -c carschannel -ccn cars -ccl go -ccv 1.0 -ccs 1 -ccp "/home/madine/go/src/github.com/madmoh/hlf-tuts/01-basic/chaincode/" -ccep "OutOf(2,'Org1MSP.peer','Org2MSP.peer')"
