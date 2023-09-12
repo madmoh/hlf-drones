@@ -13,7 +13,9 @@ type UAVContract struct {
 }
 
 type Operator struct {
-	OperatorId string `json:"OperatorId"` // TODO: Unique accross operators
+	OperatorId         string    `json:"OperatorId"`      // TODO: Unique accross operators
+	CertificateTier    string    `json:"CertificateTier"` // TODO: Could also be an enum
+	CertificateExpiary time.Time `json:CertificateExpiary`
 	// Other attributes
 }
 
@@ -38,7 +40,9 @@ func (c *UAVContract) AddOperator(ctx contractapi.TransactionContextInterface, o
 		return fmt.Errorf("Operator %v already exists", operatorId)
 	}
 	operator := Operator{
-		OperatorId: operatorId,
+		OperatorId:         operatorId,
+		CertificateTier:    "NO_CERTIFICATE",
+		CertificateExpiary: time.Now(),
 	}
 	operatorJSON, err := json.Marshal(operator)
 	if err != nil {
@@ -47,8 +51,45 @@ func (c *UAVContract) AddOperator(ctx contractapi.TransactionContextInterface, o
 	return ctx.GetStub().PutState(operatorId, operatorJSON)
 }
 
-func (c *UAVContract) AddDrone(ctx, droneId string, expiary time.Time, remoteId string) error {
+func (c *UAVContract) AddDrone(ctx contractapi.TransactionContextInterface, droneId string, expiary time.Time, remoteId string) error {
+	// TODO: Similar checks to AddOperator
+	exists, err := c.KeyExists(ctx, droneId)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("Drone %v already exists", droneId)
+	}
+	drone := Drone{
+		DroneId:  droneId,
+		Expiary:  expiary,
+		RemoteId: remoteId,
+	}
+	droneJSON, err := json.Marshal(drone)
+	if err != nil {
+		return err
+	}
+	return ctx.GetStub().PutState(droneId, droneJSON)
+}
 
+func (c *UAVContract) AddCertificate(ctx contractapi.TransactionContextInterface, operatorId string, tier string, expiary time.Time) error {
+	exists, err := c.KeyExists(ctx, operatorId)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("Operator %v does not exist", operatorId)
+	}
+	operator := Operator{
+		OperatorId:         operatorId,
+		CertificateTier:    tier,
+		CertificateExpiary: expiary,
+	}
+	operatorJSON, err := json.Marshal(operator)
+	if err != nil {
+		return err
+	}
+	return ctx.GetStub().PutState(operatorId, operatorJSON)
 }
 
 func (c *UAVContract) KeyExists(ctx contractapi.TransactionContextInterface, key string) (bool, error) {
