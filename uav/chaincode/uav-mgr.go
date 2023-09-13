@@ -92,6 +92,29 @@ func (c *UAVContract) AddCertificate(ctx contractapi.TransactionContextInterface
 	return ctx.GetStub().PutState(operatorId, operatorJSON)
 }
 
+// RecordsSC.RequestPermit(UASId, PermitStartDateTime, PermitEndDateTime, {Geo bounds})
+// - Requires manual approval by the Provider ("forward" to the operator's providers)
+
+// RecordsSC.RejectPermit(PermitId)
+// - Log the error and invalidate the request
+
+// RecordsSC.AcceptPermit(PermitId)
+// - Builds the kdtree
+
+// Flights.LogTakeoff(UASId).
+// - Record the time of takingoff to start expecting n RemoteId messages every n seconds (require n < ?)
+
+// Flights.LogBeacons(...?)
+// - Wait until N (cumulative n) is > ...? then execute Flights.AnalyzeBeacons
+
+// Flights.AnalyzeBeacons(...?)
+// - Execute isinside
+// - Invokes Warnings.ReportFlight(...)
+
+// Flights.LogLanding(UASId)
+
+// ?.BanOperator or ?.BanDrone
+
 func (c *UAVContract) KeyExists(ctx contractapi.TransactionContextInterface, key string) (bool, error) {
 	valueJSON, err := ctx.GetStub().GetState(key)
 	if err != nil {
