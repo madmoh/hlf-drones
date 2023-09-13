@@ -143,9 +143,6 @@ func (c *UAVContract) RequestPermit(ctx contractapi.TransactionContextInterface,
 	return ctx.GetStub().PutState(operatorId, operatorJSON)
 }
 
-// RecordsSC.RequestPermit(UASId, PermitStartDateTime, PermitEndDateTime, {Geo bounds})
-// - Requires manual approval by the Provider ("forward" to the operator's providers)
-
 // RecordsSC.RejectPermit(PermitId)
 // - Log the error and invalidate the request
 
