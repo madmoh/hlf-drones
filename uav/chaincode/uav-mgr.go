@@ -13,17 +13,26 @@ type UAVContract struct {
 }
 
 type Operator struct {
-	OperatorId         string    `json:"OperatorId"`      // TODO: Unique accross operators
-	CertificateTier    string    `json:"CertificateTier"` // TODO: Could also be an enum
-	CertificateExpiary time.Time `json:CertificateExpiary`
-	// Other attributes
+	OperatorId        string            `json:"OperatorId"`      // TODO: Unique accross operators
+	CertificateTier   string            `json:"CertificateTier"` // TODO: Could also be an enum
+	CertificateExpiry time.Time         `json:CertificateExpiry`
+	ActivePermits     map[string]Permit `json:"ActivePermits"`
 }
 
 type Drone struct {
 	DroneId  string    `json:"DroneId"` // TODO: Unique accross drones
-	Expiary  time.Time `json:"Expiary"`
+	Expiry   time.Time `json:"Expiry"`
 	RemoteId string    `json:"RemoteId"` // TODO: Unique accross drones
-	// Other attributes
+}
+
+type Permit struct {
+	// PermitId         string    `json:"PermitId"`
+	// OperatorId       string    `json:"OperatorId"`
+	DroneId          string    `json:"DroneId"`
+	PermitEffective  time.Time `json:"PermitEffective"`
+	PermitExpiry     time.Time `json:"PermitExpiry"`
+	BoundaryVertices []float64 `json:"BoundaryVertices"`
+	BoundaryFacets   []float64 `json:"BoundaryFacets"`
 }
 
 func (c *UAVContract) AddOperator(ctx contractapi.TransactionContextInterface, operatorId string) error {
@@ -40,9 +49,10 @@ func (c *UAVContract) AddOperator(ctx contractapi.TransactionContextInterface, o
 		return fmt.Errorf("Operator %v already exists", operatorId)
 	}
 	operator := Operator{
-		OperatorId:         operatorId,
-		CertificateTier:    "NO_CERTIFICATE",
-		CertificateExpiary: time.Now(),
+		OperatorId:        operatorId,
+		CertificateTier:   "NO_CERTIFICATE",
+		CertificateExpiry: time.Now(),
+		ActivePermits:     make(map[string]Permit),
 	}
 	operatorJSON, err := json.Marshal(operator)
 	if err != nil {
@@ -51,7 +61,7 @@ func (c *UAVContract) AddOperator(ctx contractapi.TransactionContextInterface, o
 	return ctx.GetStub().PutState(operatorId, operatorJSON)
 }
 
-func (c *UAVContract) AddDrone(ctx contractapi.TransactionContextInterface, droneId string, expiary time.Time, remoteId string) error {
+func (c *UAVContract) AddDrone(ctx contractapi.TransactionContextInterface, droneId string, expiry time.Time, remoteId string) error {
 	// TODO: Similar checks to AddOperator
 	exists, err := c.KeyExists(ctx, droneId)
 	if err != nil {
@@ -62,7 +72,7 @@ func (c *UAVContract) AddDrone(ctx contractapi.TransactionContextInterface, dron
 	}
 	drone := Drone{
 		DroneId:  droneId,
-		Expiary:  expiary,
+		Expiry:   expiry,
 		RemoteId: remoteId,
 	}
 	droneJSON, err := json.Marshal(drone)
@@ -72,7 +82,7 @@ func (c *UAVContract) AddDrone(ctx contractapi.TransactionContextInterface, dron
 	return ctx.GetStub().PutState(droneId, droneJSON)
 }
 
-func (c *UAVContract) AddCertificate(ctx contractapi.TransactionContextInterface, operatorId string, tier string, expiary time.Time) error {
+func (c *UAVContract) AddCertificate(ctx contractapi.TransactionContextInterface, operatorId string, tier string, expiry time.Time) error {
 	exists, err := c.KeyExists(ctx, operatorId)
 	if err != nil {
 		return err
@@ -81,11 +91,52 @@ func (c *UAVContract) AddCertificate(ctx contractapi.TransactionContextInterface
 		return fmt.Errorf("Operator %v does not exist", operatorId)
 	}
 	operator := Operator{
-		OperatorId:         operatorId,
-		CertificateTier:    tier,
-		CertificateExpiary: expiary,
+		OperatorId:        operatorId,
+		CertificateTier:   tier,
+		CertificateExpiry: expiry,
 	}
 	operatorJSON, err := json.Marshal(operator)
+	if err != nil {
+		return err
+	}
+	return ctx.GetStub().PutState(operatorId, operatorJSON)
+}
+
+func (c *UAVContract) RequestPermit(ctx contractapi.TransactionContextInterface, droneId string, permitEffective time.Time, permitExpiry time.Time, vertices []float64, facets []float64) error {
+	operatorId, err := ctx.GetClientIdentity().GetID()
+	if err != nil {
+		return err
+	}
+	exists, err := c.KeyExists(ctx, operatorId)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("Operator %v does not exist", operatorId)
+	}
+	operatorJSON, err := ctx.GetStub().GetState(operatorId)
+	if err != nil {
+		return fmt.Errorf("Failed to read from state. Error: %v", err)
+	}
+	if operatorJSON == nil {
+		return fmt.Errorf("Operator %v does not exist", operatorId)
+	}
+	var operator Operator
+	err = json.Unmarshal(operatorJSON, operator)
+	permitId := fmt.Sprintf("%v", time.Now().UnixNano())
+	_, exists = operator.ActivePermits[permitId]
+	if exists {
+		return fmt.Errorf("Permit %v already exists", permitId)
+	}
+	permit := Permit{
+		DroneId:          droneId,
+		PermitEffective:  permitEffective,
+		PermitExpiry:     permitExpiry,
+		BoundaryVertices: vertices,
+		BoundaryFacets:   facets,
+	}
+	operator.ActivePermits[permitId] = permit
+	operatorJSON, err = json.Marshal(operator)
 	if err != nil {
 		return err
 	}
