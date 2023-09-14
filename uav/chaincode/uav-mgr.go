@@ -3,9 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+	"madmoh/hlf-uav/isinside"
 	"time"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
+	"gonum.org/v1/gonum/spatial/kdtree"
 )
 
 type UAVContract struct {
@@ -28,12 +31,13 @@ type Drone struct {
 type Permit struct {
 	// PermitId         string    `json:"PermitId"`
 	// OperatorId       string    `json:"OperatorId"`
-	DroneId          string    `json:"DroneId"`
-	PermitEffective  time.Time `json:"PermitEffective"`
-	PermitExpiry     time.Time `json:"PermitExpiry"`
-	BoundaryVertices []float64 `json:"BoundaryVertices"`
-	BoundaryFacets   []float64 `json:"BoundaryFacets"`
-	Status           string    `json:"Status"`
+	DroneId          string       `json:"DroneId"`
+	PermitEffective  time.Time    `json:"PermitEffective"`
+	PermitExpiry     time.Time    `json:"PermitExpiry"`
+	BoundaryVertices [][3]float64 `json:"BoundaryVertices"`
+	BoundaryFacets   [][3]uint64  `json:"BoundaryFacets"`
+	Tree             *kdtree.Tree `json:"Tree"`
+	Status           string       `json:"Status"`
 }
 
 func (c *UAVContract) AddOperator(ctx contractapi.TransactionContextInterface, operatorId string) error {
@@ -103,7 +107,7 @@ func (c *UAVContract) AddCertificate(ctx contractapi.TransactionContextInterface
 	return ctx.GetStub().PutState(operatorId, operatorJSON)
 }
 
-func (c *UAVContract) RequestPermit(ctx contractapi.TransactionContextInterface, droneId string, permitEffective time.Time, permitExpiry time.Time, vertices []float64, facets []float64) error {
+func (c *UAVContract) RequestPermit(ctx contractapi.TransactionContextInterface, droneId string, permitEffective time.Time, permitExpiry time.Time, vertices [][3]float64, facets [][3]uint64) error {
 	operatorId, err := ctx.GetClientIdentity().GetID()
 	if err != nil {
 		return err
@@ -129,12 +133,14 @@ func (c *UAVContract) RequestPermit(ctx contractapi.TransactionContextInterface,
 	if exists {
 		return fmt.Errorf("Permit %v already exists", permitId)
 	}
+	tree := kdtree.Tree{Root: nil, Count: 0}
 	permit := Permit{
 		DroneId:          droneId,
 		PermitEffective:  permitEffective,
 		PermitExpiry:     permitExpiry,
 		BoundaryVertices: vertices,
 		BoundaryFacets:   facets,
+		Tree:             &tree,
 		Status:           "PENDING",
 	}
 	operator.Permits[permitId] = permit
@@ -167,6 +173,13 @@ func (c *UAVContract) EvaluatePermit(ctx contractapi.TransactionContextInterface
 		return fmt.Errorf("Permit %v does not exist", permitId)
 	}
 	permit.Status = decision
+	// TODO: Supposed to build kdtree here (once for the boundary) but cannot since the tree struct is not allowed in ctx
+	if decision == "APPROVED" {
+		// vertices2D := isinside.ConvertFloat64To2D(permit.BoundaryVertices)
+		// facets2D := isinside.ConvertUint64To2D(permit.BoundaryFacets)
+		tree, _, _ := isinside.GenerateKDTreePlus(permit.BoundaryVertices, permit.BoundaryFacets)
+		permit.Tree = tree
+	}
 	operator.Permits[permitId] = permit
 	operatorJSON, err = json.Marshal(operator)
 	if err != nil {
@@ -174,9 +187,6 @@ func (c *UAVContract) EvaluatePermit(ctx contractapi.TransactionContextInterface
 	}
 	return ctx.GetStub().PutState(operatorId, operatorJSON)
 }
-
-// RecordsSC.AcceptPermit(PermitId)
-// - Builds the kdtree
 
 // Flights.LogTakeoff(UASId).
 // - Record the time of takingoff to start expecting n RemoteId messages every n seconds (require n < ?)
@@ -198,4 +208,15 @@ func (c *UAVContract) KeyExists(ctx contractapi.TransactionContextInterface, key
 		return false, fmt.Errorf("Failed to read world state. Error: %v", err)
 	}
 	return valueJSON != nil, nil
+}
+
+func main() {
+	carChaincode, err := contractapi.NewChaincode(&UAVContract{})
+	if err != nil {
+		log.Panicf("Error creating cars chaincode: %v", err)
+	}
+	err = carChaincode.Start()
+	if err != nil {
+		log.Panicf("Error starting cars chaincode: %v", err)
+	}
 }

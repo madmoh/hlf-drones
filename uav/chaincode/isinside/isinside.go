@@ -1,4 +1,4 @@
-package main
+package isinside
 
 import (
 	"bufio"
@@ -11,14 +11,17 @@ import (
 	"gonum.org/v1/gonum/spatial/r3"
 )
 
-func main() {
-	v, f := ParseOBJ("armadillo.obj")
-	q := make([][3]float64, 100_000)
-	for i := range q {
-		q[i] = [3]float64{-1.377701, -1.285421, -1.947002}
-	}
-	InOrOut(v, f, q)
-}
+// func main() {
+// 	v, f := ParseOBJ("armadillo.obj")
+// 	q := make([][3]float64, 100_000)
+// 	for i := range q {
+// 		q[i] = [3]float64{-1.377701, -1.285421, -1.947002}
+// 	}
+// 	vFlat := flattenFloat64(v)
+// 	fFlat := flattenUint64(f)
+// 	qFlat := flattenFloat64(q)
+// 	InOrOutFlat(vFlat, fFlat, qFlat)
+// }
 
 func ParseOBJ(filepath string) ([][3]float64, [][3]uint64) {
 	file, _ := os.Open(filepath)
@@ -67,6 +70,42 @@ func ParseOBJ(filepath string) ([][3]float64, [][3]uint64) {
 	}
 
 	return vertices, facets
+}
+
+func ConvertFloat64To2D(array []float64) [][3]float64 {
+	array2D := make([][3]float64, len(array)/3)
+	for i := 0; i < len(array)/3; i++ {
+		array2D[i] = [3]float64{array[i*3+0], array[i*3+1], array[i*3+2]}
+	}
+	return array2D
+}
+
+func FlattenFloat64(array [][3]float64) []float64 {
+	arrayFlat := make([]float64, len(array)*3)
+	for i := 0; i < len(array); i++ {
+		arrayFlat[i*3+0] = array[i][0]
+		arrayFlat[i*3+1] = array[i][1]
+		arrayFlat[i*3+2] = array[i][2]
+	}
+	return arrayFlat
+}
+
+func ConvertUint64To2D(array []uint64) [][3]uint64 {
+	array2D := make([][3]uint64, len(array)/3)
+	for i := 0; i < len(array)/3; i++ {
+		array2D[i] = [3]uint64{array[i*3+0], array[i*3+1], array[i*3+2]}
+	}
+	return array2D
+}
+
+func FlattenUint64(array [][3]uint64) []uint64 {
+	arrayFlat := make([]uint64, len(array)*3)
+	for i := 0; i < len(array); i++ {
+		arrayFlat[i*3+0] = array[i][0]
+		arrayFlat[i*3+1] = array[i][1]
+		arrayFlat[i*3+2] = array[i][2]
+	}
+	return arrayFlat
 }
 
 func GetIncenterNormal(vertices [3][3]float64) ([3]float64, [3]float64) {
@@ -125,17 +164,17 @@ func GetDistance(vertex [3]float64, normal [3]float64, query [3]float64) float64
 	return dist.X + dist.Y + dist.Z
 }
 
-func GenerateKDTree(incenters [][3]float64, facets [][3]uint64) *kdtree.Tree {
+func GenerateKDTreePlus(vertices [][3]float64, facets [][3]uint64) (*kdtree.Tree, [][3]float64, [][3]float64) {
+	incenters, normals := GetIncentersNormals(vertices, facets)
 	incentersPoints := make([]kdtree.Point, len(facets))
 	for i := 0; i < len(facets); i++ {
 		incentersPoints[i] = kdtree.Point(incenters[i][:])
 	}
-	return kdtree.New(kdtree.Points(incentersPoints), false)
+	return kdtree.New(kdtree.Points(incentersPoints), false), incenters, normals
 }
 
 func InOrOut(vertices [][3]float64, facets [][3]uint64, query [][3]float64) []float64 {
-	incenters, normals := GetIncentersNormals(vertices, facets)
-	tree := GenerateKDTree(incenters, facets)
+	tree, incenters, normals := GenerateKDTreePlus(vertices, facets)
 	distances := make([]float64, len(query))
 	for i := 0; i < len(query); i++ {
 		fmt.Println(i)
@@ -145,4 +184,11 @@ func InOrOut(vertices [][3]float64, facets [][3]uint64, query [][3]float64) []fl
 		distances[i] = GetDistance(closest, normals[closestIndex], query[i])
 	}
 	return distances
+}
+
+func InOrOutFlat(vertices []float64, facets []uint64, query []float64) []float64 {
+	vertices2D := ConvertFloat64To2D(vertices)
+	facets2D := ConvertUint64To2D(facets)
+	query2D := ConvertFloat64To2D(query)
+	return InOrOut(vertices2D, facets2D, query2D)
 }
