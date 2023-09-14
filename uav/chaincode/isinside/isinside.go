@@ -13,11 +13,11 @@ import (
 
 func main() {
 	v, f := ParseOBJ("armadillo.obj")
-	q := make([][3]float64, 100*100*100)
+	q := make([][3]float64, 100_000)
 	for i := range q {
 		q[i] = [3]float64{-1.377701, -1.285421, -1.947002}
 	}
-	fmt.Println(InOrOut(v, f, q))
+	InOrOut(v, f, q)
 }
 
 func ParseOBJ(filepath string) ([][3]float64, [][3]uint64) {
@@ -125,13 +125,17 @@ func GetDistance(vertex [3]float64, normal [3]float64, query [3]float64) float64
 	return dist.X + dist.Y + dist.Z
 }
 
-func InOrOut(vertices [][3]float64, facets [][3]uint64, query [][3]float64) []float64 {
-	incenters, normals := GetIncentersNormals(vertices, facets)
+func GenerateKDTree(incenters [][3]float64, facets [][3]uint64) *kdtree.Tree {
 	incentersPoints := make([]kdtree.Point, len(facets))
 	for i := 0; i < len(facets); i++ {
 		incentersPoints[i] = kdtree.Point(incenters[i][:])
 	}
-	tree := kdtree.New(kdtree.Points(incentersPoints), false)
+	return kdtree.New(kdtree.Points(incentersPoints), false)
+}
+
+func InOrOut(vertices [][3]float64, facets [][3]uint64, query [][3]float64) []float64 {
+	incenters, normals := GetIncentersNormals(vertices, facets)
+	tree := GenerateKDTree(incenters, facets)
 	distances := make([]float64, len(query))
 	for i := 0; i < len(query); i++ {
 		fmt.Println(i)

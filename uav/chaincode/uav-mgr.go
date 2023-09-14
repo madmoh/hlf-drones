@@ -16,7 +16,7 @@ type Operator struct {
 	OperatorId        string            `json:"OperatorId"`      // TODO: Unique accross operators
 	CertificateTier   string            `json:"CertificateTier"` // TODO: Could also be an enum
 	CertificateExpiry time.Time         `json:CertificateExpiry`
-	ActivePermits     map[string]Permit `json:"ActivePermits"`
+	Permits           map[string]Permit `json:"Permits"`
 }
 
 type Drone struct {
@@ -33,6 +33,7 @@ type Permit struct {
 	PermitExpiry     time.Time `json:"PermitExpiry"`
 	BoundaryVertices []float64 `json:"BoundaryVertices"`
 	BoundaryFacets   []float64 `json:"BoundaryFacets"`
+	Status           string    `json:"Status"`
 }
 
 func (c *UAVContract) AddOperator(ctx contractapi.TransactionContextInterface, operatorId string) error {
@@ -52,7 +53,7 @@ func (c *UAVContract) AddOperator(ctx contractapi.TransactionContextInterface, o
 		OperatorId:        operatorId,
 		CertificateTier:   "NO_CERTIFICATE",
 		CertificateExpiry: time.Now(),
-		ActivePermits:     make(map[string]Permit),
+		Permits:           make(map[string]Permit),
 	}
 	operatorJSON, err := json.Marshal(operator)
 	if err != nil {
@@ -123,8 +124,8 @@ func (c *UAVContract) RequestPermit(ctx contractapi.TransactionContextInterface,
 	}
 	var operator Operator
 	err = json.Unmarshal(operatorJSON, operator)
-	permitId := fmt.Sprintf("%v", time.Now().UnixNano())
-	_, exists = operator.ActivePermits[permitId]
+	permitId := fmt.Sprintf("%v", time.Now().UnixNano()) // TODO: Better way to generate a permitId
+	_, exists = operator.Permits[permitId]
 	if exists {
 		return fmt.Errorf("Permit %v already exists", permitId)
 	}
@@ -134,8 +135,9 @@ func (c *UAVContract) RequestPermit(ctx contractapi.TransactionContextInterface,
 		PermitExpiry:     permitExpiry,
 		BoundaryVertices: vertices,
 		BoundaryFacets:   facets,
+		Status:           "PENDING",
 	}
-	operator.ActivePermits[permitId] = permit
+	operator.Permits[permitId] = permit
 	operatorJSON, err = json.Marshal(operator)
 	if err != nil {
 		return err
@@ -143,8 +145,35 @@ func (c *UAVContract) RequestPermit(ctx contractapi.TransactionContextInterface,
 	return ctx.GetStub().PutState(operatorId, operatorJSON)
 }
 
-// RecordsSC.RejectPermit(PermitId)
-// - Log the error and invalidate the request
+func (c *UAVContract) EvaluatePermit(ctx contractapi.TransactionContextInterface, operatorId string, permitId string, decision string) error {
+	exists, err := c.KeyExists(ctx, operatorId)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("Operator %v does not exist", operatorId)
+	}
+	operatorJSON, err := ctx.GetStub().GetState(operatorId)
+	if err != nil {
+		return fmt.Errorf("Failed to read from state. Error: %v", err)
+	}
+	if operatorJSON == nil {
+		return fmt.Errorf("Operator %v does not exist", operatorId)
+	}
+	var operator Operator
+	err = json.Unmarshal(operatorJSON, operator)
+	permit, exists := operator.Permits[permitId]
+	if !exists {
+		return fmt.Errorf("Permit %v does not exist", permitId)
+	}
+	permit.Status = decision
+	operator.Permits[permitId] = permit
+	operatorJSON, err = json.Marshal(operator)
+	if err != nil {
+		return err
+	}
+	return ctx.GetStub().PutState(operatorId, operatorJSON)
+}
 
 // RecordsSC.AcceptPermit(PermitId)
 // - Builds the kdtree
