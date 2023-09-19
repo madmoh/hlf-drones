@@ -1,6 +1,6 @@
 module madmoh/hlf-cars
 
-go 1.21.1
+go 1.21
 
 require github.com/hyperledger/fabric-contract-api-go v1.2.1
 

@@ -15,11 +15,13 @@ type UAVContract struct {
 	contractapi.Contract
 }
 
+// TODO: OperatorId, DroneId shouldn't be inside their respective structs
+
 type Operator struct {
 	OperatorId        string            `json:"OperatorId"`      // TODO: Unique accross operators
 	CertificateTier   string            `json:"CertificateTier"` // TODO: Could also be an enum
 	CertificateExpiry time.Time         `json:CertificateExpiry`
-	Permits           map[string]Permit `json:"Permits"`
+	Flights           map[string]Flight `json:"Flights"`
 }
 
 type Drone struct {
@@ -28,16 +30,19 @@ type Drone struct {
 	RemoteId string    `json:"RemoteId"` // TODO: Unique accross drones
 }
 
-type Permit struct {
-	// PermitId         string    `json:"PermitId"`
+type Flight struct {
+	// FlightId         string    `json:"FlightId"`
 	// OperatorId       string    `json:"OperatorId"`
 	DroneId          string       `json:"DroneId"`
 	PermitEffective  time.Time    `json:"PermitEffective"`
 	PermitExpiry     time.Time    `json:"PermitExpiry"`
-	BoundaryVertices [][3]float64 `json:"BoundaryVertices"`
-	BoundaryFacets   [][3]uint64  `json:"BoundaryFacets"`
+	BoundaryVertices [][3]float64 `json:"BoundaryVertices"` // TODO: Expand to [][][3]
+	BoundaryFacets   [][3]uint64  `json:"BoundaryFacets"`   // TODO: Expand to [][][3]
 	Tree             *kdtree.Tree `json:"Tree"`
-	Status           string       `json:"Status"`
+	Status           string       `json:"Status"` // PENDING, REJECTED, APPROVED, ACTIVE
+	Takeoff          time.Time    `json:"Takeoff"`
+	Landing          time.Time    `json:"Landing"`
+	Beacons          [][3]float64 `json:Beacons`
 }
 
 func (c *UAVContract) AddOperator(ctx contractapi.TransactionContextInterface, operatorId string) error {
@@ -57,7 +62,7 @@ func (c *UAVContract) AddOperator(ctx contractapi.TransactionContextInterface, o
 		OperatorId:        operatorId,
 		CertificateTier:   "NO_CERTIFICATE",
 		CertificateExpiry: time.Now(),
-		Permits:           make(map[string]Permit),
+		Flights:           make(map[string]Flight),
 	}
 	operatorJSON, err := json.Marshal(operator)
 	if err != nil {
@@ -128,13 +133,13 @@ func (c *UAVContract) RequestPermit(ctx contractapi.TransactionContextInterface,
 	}
 	var operator Operator
 	err = json.Unmarshal(operatorJSON, operator)
-	permitId := fmt.Sprintf("%v", time.Now().UnixNano()) // TODO: Better way to generate a permitId
-	_, exists = operator.Permits[permitId]
+	flightId := fmt.Sprintf("%v", time.Now().UnixNano()) // TODO: Better way to generate a flightId
+	_, exists = operator.Flights[flightId]
 	if exists {
-		return fmt.Errorf("Permit %v already exists", permitId)
+		return fmt.Errorf("Flight %v already exists", flightId)
 	}
 	tree := kdtree.Tree{Root: nil, Count: 0}
-	permit := Permit{
+	flight := Flight{
 		DroneId:          droneId,
 		PermitEffective:  permitEffective,
 		PermitExpiry:     permitExpiry,
@@ -142,8 +147,11 @@ func (c *UAVContract) RequestPermit(ctx contractapi.TransactionContextInterface,
 		BoundaryFacets:   facets,
 		Tree:             &tree,
 		Status:           "PENDING",
+		Takeoff:          time.Now(),
+		Landing:          time.Now(),
+		Beacons:          make([][3]float64, 0),
 	}
-	operator.Permits[permitId] = permit
+	operator.Flights[flightId] = flight
 	operatorJSON, err = json.Marshal(operator)
 	if err != nil {
 		return err
@@ -151,7 +159,7 @@ func (c *UAVContract) RequestPermit(ctx contractapi.TransactionContextInterface,
 	return ctx.GetStub().PutState(operatorId, operatorJSON)
 }
 
-func (c *UAVContract) EvaluatePermit(ctx contractapi.TransactionContextInterface, operatorId string, permitId string, decision string) error {
+func (c *UAVContract) EvaluatePermit(ctx contractapi.TransactionContextInterface, operatorId string, flightId string, decision string) error {
 	exists, err := c.KeyExists(ctx, operatorId)
 	if err != nil {
 		return err
@@ -168,24 +176,108 @@ func (c *UAVContract) EvaluatePermit(ctx contractapi.TransactionContextInterface
 	}
 	var operator Operator
 	err = json.Unmarshal(operatorJSON, operator)
-	permit, exists := operator.Permits[permitId]
+	flight, exists := operator.Flights[flightId]
 	if !exists {
-		return fmt.Errorf("Permit %v does not exist", permitId)
+		return fmt.Errorf("Flight %v does not exist", flightId)
 	}
-	permit.Status = decision
+	flight.Status = decision
 	// TODO: Supposed to build kdtree here (once for the boundary) but cannot since the tree struct is not allowed in ctx
 	if decision == "APPROVED" {
-		// vertices2D := isinside.ConvertFloat64To2D(permit.BoundaryVertices)
-		// facets2D := isinside.ConvertUint64To2D(permit.BoundaryFacets)
-		tree, _, _ := isinside.GenerateKDTreePlus(permit.BoundaryVertices, permit.BoundaryFacets)
-		permit.Tree = tree
+		// vertices2D := isinside.ConvertFloat64To2D(flight.BoundaryVertices)
+		// facets2D := isinside.ConvertUint64To2D(flight.BoundaryFacets)
+		tree, _, _ := isinside.GenerateKDTreePlus(flight.BoundaryVertices, flight.BoundaryFacets)
+		flight.Tree = tree
 	}
-	operator.Permits[permitId] = permit
+	operator.Flights[flightId] = flight
 	operatorJSON, err = json.Marshal(operator)
 	if err != nil {
 		return err
 	}
 	return ctx.GetStub().PutState(operatorId, operatorJSON)
+}
+
+func (c *UAVContract) LogTakeoff(ctx contractapi.TransactionContextInterface, flightId string) error {
+	operatorId, err := ctx.GetClientIdentity().GetID()
+	if err != nil {
+		return err
+	}
+	exists, err := c.KeyExists(ctx, operatorId)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("Operator %v does not exist", operatorId)
+	}
+	operatorJSON, err := ctx.GetStub().GetState(operatorId)
+	if err != nil {
+		return fmt.Errorf("Failed to read from state. Error: %v", err)
+	}
+	if operatorJSON == nil {
+		return fmt.Errorf("Operator %v does not exist", operatorId)
+	}
+	var operator Operator
+	err = json.Unmarshal(operatorJSON, operator)
+	flight, exists := operator.Flights[flightId]
+	if !exists {
+		return fmt.Errorf("Flight %v does not exist", flightId)
+	}
+	flight.Status = "ACTIVE"
+	flight.Takeoff = time.Now()
+	operator.Flights[flightId] = flight
+	operatorJSON, err = json.Marshal(operator)
+	if err != nil {
+		return err
+	}
+	return ctx.GetStub().PutState(operatorId, operatorJSON)
+}
+
+func (c *UAVContract) LogBeacons(ctx contractapi.TransactionContextInterface, flightId string, newBeacons [][3]float64) error {
+	operatorId, err := ctx.GetClientIdentity().GetID()
+	if err != nil {
+		return err
+	}
+	exists, err := c.KeyExists(ctx, operatorId)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("Operator %v does not exist", operatorId)
+	}
+	operatorJSON, err := ctx.GetStub().GetState(operatorId)
+	if err != nil {
+		return fmt.Errorf("Failed to read from state. Error: %v", err)
+	}
+	if operatorJSON == nil {
+		return fmt.Errorf("Operator %v does not exist", operatorId)
+	}
+	var operator Operator
+	err = json.Unmarshal(operatorJSON, operator)
+	flight, exists := operator.Flights[flightId]
+	if !exists {
+		return fmt.Errorf("Flight %v does not exist", flightId)
+	}
+	flight.Beacons = append(flight.Beacons, newBeacons...)
+	operator.Flights[flightId] = flight
+	operatorJSON, err = json.Marshal(operator)
+	if err != nil {
+		return err
+	}
+	err = ctx.GetStub().PutState(operatorId, operatorJSON)
+	if err != nil {
+		return err
+	}
+	// TODO: Specify 1000 as a contract-wide parameter
+	if len(flight.Beacons) > 1000 {
+		err = c.AnalyzeBeacons(ctx, flightId)
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *UAVContract) AnalyzeBeacons(ctx contractapi.TransactionContextInterface, flightId string) error {
+	return nil
 }
 
 // Flights.LogTakeoff(UASId).
