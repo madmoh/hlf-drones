@@ -173,7 +173,7 @@ func GenerateKDTreePlus(vertices [][3]float64, facets [][3]uint64) (*kdtree.Tree
 	return kdtree.New(kdtree.Points(incentersPoints), false), incenters, normals
 }
 
-func InOrOut(vertices [][3]float64, facets [][3]uint64, query [][3]float64) []float64 {
+func GetDistances(vertices [][3]float64, facets [][3]uint64, query [][3]float64) []float64 {
 	tree, incenters, normals := GenerateKDTreePlus(vertices, facets)
 	distances := make([]float64, len(query))
 	for i := 0; i < len(query); i++ {
@@ -186,9 +186,18 @@ func InOrOut(vertices [][3]float64, facets [][3]uint64, query [][3]float64) []fl
 	return distances
 }
 
-func InOrOutFlat(vertices []float64, facets []uint64, query []float64) []float64 {
+func GetDistancesFlat(vertices []float64, facets []uint64, query []float64) []float64 {
 	vertices2D := ConvertFloat64To2D(vertices)
 	facets2D := ConvertUint64To2D(facets)
 	query2D := ConvertFloat64To2D(query)
-	return InOrOut(vertices2D, facets2D, query2D)
+	return GetDistances(vertices2D, facets2D, query2D)
+}
+
+func GetInclusions(vertices [][3]float64, facets [][3]uint64, query [][3]float64) []bool {
+	distances := GetDistances(vertices, facets, query)
+	inclusions := make([]bool, len(distances))
+	for i := range distances {
+		inclusions[i] = distances[i] > 0
+	}
+	return inclusions
 }

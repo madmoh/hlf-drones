@@ -20,7 +20,7 @@ type UAVContract struct {
 type Operator struct {
 	OperatorId        string            `json:"OperatorId"`      // TODO: Unique accross operators
 	CertificateTier   string            `json:"CertificateTier"` // TODO: Could also be an enum
-	CertificateExpiry time.Time         `json:CertificateExpiry`
+	CertificateExpiry time.Time         `json:"CertificateExpiry"`
 	Flights           map[string]Flight `json:"Flights"`
 }
 
@@ -30,6 +30,7 @@ type Drone struct {
 	RemoteId string    `json:"RemoteId"` // TODO: Unique accross drones
 }
 
+// TODO: Maybe a custom TimeOptional{bool,time.Time} is better
 type Flight struct {
 	// FlightId         string    `json:"FlightId"`
 	// OperatorId       string    `json:"OperatorId"`
@@ -42,7 +43,8 @@ type Flight struct {
 	Status           string       `json:"Status"` // PENDING, REJECTED, APPROVED, ACTIVE
 	Takeoff          time.Time    `json:"Takeoff"`
 	Landing          time.Time    `json:"Landing"`
-	Beacons          [][3]float64 `json:Beacons`
+	Beacons          [][3]float64 `json:"Beacons"`
+	LastBeaconAt     time.Time    `json:"LastBeaconAt"`
 }
 
 func (c *UAVContract) AddOperator(ctx contractapi.TransactionContextInterface, operatorId string) error {
@@ -150,6 +152,7 @@ func (c *UAVContract) RequestPermit(ctx contractapi.TransactionContextInterface,
 		Takeoff:          time.Now(),
 		Landing:          time.Now(),
 		Beacons:          make([][3]float64, 0),
+		LastBeaconAt:     time.Now(),
 	}
 	operator.Flights[flightId] = flight
 	operatorJSON, err = json.Marshal(operator)
@@ -196,6 +199,7 @@ func (c *UAVContract) EvaluatePermit(ctx contractapi.TransactionContextInterface
 	return ctx.GetStub().PutState(operatorId, operatorJSON)
 }
 
+// TODO: Additional business logic checks (e.g., if not already active)
 func (c *UAVContract) LogTakeoff(ctx contractapi.TransactionContextInterface, flightId string) error {
 	operatorId, err := ctx.GetClientIdentity().GetID()
 	if err != nil {
@@ -231,6 +235,7 @@ func (c *UAVContract) LogTakeoff(ctx contractapi.TransactionContextInterface, fl
 	return ctx.GetStub().PutState(operatorId, operatorJSON)
 }
 
+// TODO: Additional business logic checks (e.g., if still within permit period)
 func (c *UAVContract) LogBeacons(ctx contractapi.TransactionContextInterface, flightId string, newBeacons [][3]float64) error {
 	operatorId, err := ctx.GetClientIdentity().GetID()
 	if err != nil {
@@ -256,7 +261,16 @@ func (c *UAVContract) LogBeacons(ctx contractapi.TransactionContextInterface, fl
 	if !exists {
 		return fmt.Errorf("Flight %v does not exist", flightId)
 	}
+	if flight.Status != "ACTIVE" {
+		return fmt.Errorf("Flight %v status is not ACTIVE", flightId)
+	}
+	// TODO: Find if it's possible to get time based on the invocation time
+	// TODO: Add margin of error
+	if int(time.Since(flight.LastBeaconAt).Seconds()) != len(flight.Beacons) {
+		return fmt.Errorf("Mismatch in flight %v beacons and invocation time ", flightId)
+	}
 	flight.Beacons = append(flight.Beacons, newBeacons...)
+	flight.LastBeaconAt = time.Now()
 	operator.Flights[flightId] = flight
 	operatorJSON, err = json.Marshal(operator)
 	if err != nil {
@@ -268,7 +282,7 @@ func (c *UAVContract) LogBeacons(ctx contractapi.TransactionContextInterface, fl
 	}
 	// TODO: Specify 1000 as a contract-wide parameter
 	if len(flight.Beacons) > 1000 {
-		err = c.AnalyzeBeacons(ctx, flightId)
+		err = c.AnalyzeBeacons(ctx, operator, operatorId, flight, flightId)
 	}
 	if err != nil {
 		return err
@@ -276,8 +290,64 @@ func (c *UAVContract) LogBeacons(ctx contractapi.TransactionContextInterface, fl
 	return nil
 }
 
-func (c *UAVContract) AnalyzeBeacons(ctx contractapi.TransactionContextInterface, flightId string) error {
+// TODO: Function design can be much improved
+func (c *UAVContract) AnalyzeBeacons(ctx contractapi.TransactionContextInterface, operator Operator, operatorId string, flight Flight, flightId string) error {
+	inclusions := isinside.GetInclusions(flight.BoundaryVertices, flight.BoundaryFacets, flight.Beacons)
+	for _, inclusion := range inclusions {
+		if !inclusion {
+			return fmt.Errorf("Drone %v has breached its permitted region", flight.DroneId)
+		}
+	}
+	flight.Beacons = nil
+	operator.Flights[flightId] = flight
+	operatorJSON, err := json.Marshal(operator)
+	if err != nil {
+		return err
+	}
+	err = ctx.GetStub().PutState(operatorId, operatorJSON)
+	if err != nil {
+		return err
+	}
 	return nil
+}
+
+// TODO: Additional business logic checks
+func (c *UAVContract) LogLanding(ctx contractapi.TransactionContextInterface, flightId string) error {
+	operatorId, err := ctx.GetClientIdentity().GetID()
+	if err != nil {
+		return err
+	}
+	exists, err := c.KeyExists(ctx, operatorId)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("Operator %v does not exist", operatorId)
+	}
+	operatorJSON, err := ctx.GetStub().GetState(operatorId)
+	if err != nil {
+		return fmt.Errorf("Failed to read from state. Error: %v", err)
+	}
+	if operatorJSON == nil {
+		return fmt.Errorf("Operator %v does not exist", operatorId)
+	}
+	var operator Operator
+	err = json.Unmarshal(operatorJSON, operator)
+	flight, exists := operator.Flights[flightId]
+	if !exists {
+		return fmt.Errorf("Flight %v does not exist", flightId)
+	}
+	if flight.Status != "ACTIVE" {
+		return fmt.Errorf("Flight %v status is not ACTIVE", flightId)
+	}
+	flight.Status = "PENDING"
+	flight.Landing = time.Now()
+	operator.Flights[flightId] = flight
+	operatorJSON, err = json.Marshal(operator)
+	if err != nil {
+		return err
+	}
+	return ctx.GetStub().PutState(operatorId, operatorJSON)
 }
 
 // Flights.LogTakeoff(UASId).
