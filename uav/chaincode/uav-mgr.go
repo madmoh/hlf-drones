@@ -9,7 +9,6 @@ import (
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"golang.org/x/exp/slices"
-	"gonum.org/v1/gonum/spatial/kdtree"
 )
 
 type UAVContract struct {
@@ -31,7 +30,6 @@ type Operator struct {
 type Drone struct {
 	DroneId string    `json:"DroneId"`
 	Expiry  time.Time `json:"Expiry"`
-	// RemoteId string `json:"RemoteId"` // TODO: Unique accross drones
 }
 
 type Flight struct {
@@ -42,13 +40,12 @@ type Flight struct {
 	PermitExpiry     time.Time    `json:"PermitExpiry"`
 	BoundaryVertices [][3]float64 `json:"BoundaryVertices"` // TODO: Expand to [][][3]
 	BoundaryFacets   [][3]uint64  `json:"BoundaryFacets"`   // TODO: Expand to [][][3]
-	Tree             *kdtree.Tree `json:"Tree"`
-	Status           string       `json:"Status"` // PENDING, REJECTED, APPROVED, ACTIVE
-	Takeoff          time.Time    `json:"Takeoff"`
-	Landing          time.Time    `json:"Landing"`
-	Beacons          [][3]float64 `json:"Beacons"`
-	LastBeaconAt     time.Time    `json:"LastBeaconAt"`
-	// OperatorId       string    `json:"OperatorId"`
+	// Tree             *kdtree.Tree `json:"Tree"`
+	Status       string       `json:"Status"` // PENDING, REJECTED, APPROVED, ACTIVE
+	Takeoff      time.Time    `json:"Takeoff"`
+	Landing      time.Time    `json:"Landing"`
+	Beacons      [][3]float64 `json:"Beacons"`
+	LastBeaconAt time.Time    `json:"LastBeaconAt"`
 }
 
 type Violation struct {
@@ -143,35 +140,35 @@ func (c *UAVContract) AddCertificate(ctx contractapi.TransactionContextInterface
 func (c *UAVContract) RequestPermit(ctx contractapi.TransactionContextInterface, flightId string, droneId string, permitEffective time.Time, permitExpiry time.Time, vertices [][3]float64, facets [][3]uint64) error {
 	operatorId, err := ctx.GetClientIdentity().GetID()
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot get client identity. Error: %v", err)
 	}
 	exists, err := c.KeyExists(ctx, operatorId)
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot check if key exists. Error: %v", err)
 	}
 	if !exists {
-		return fmt.Errorf("Operator %v does not exist", operatorId)
+		return fmt.Errorf("operator %v does not exist", operatorId)
 	}
 	operatorJSON, err := ctx.GetStub().GetState(operatorId)
 	if err != nil {
 		return fmt.Errorf("failed to read from state. Error: %v", err)
 	}
 	if operatorJSON == nil {
-		return fmt.Errorf("Operator %v does not exist", operatorId)
+		return fmt.Errorf("operator %v does not exist", operatorId)
 	}
 	var operator Operator
 	err = json.Unmarshal(operatorJSON, &operator)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal %v. Error: %v", operatorJSON, err)
 	}
 	exists = slices.Contains(operator.FlightIds, flightId)
 	if exists {
-		return fmt.Errorf("Operator already has flight %v", flightId)
+		return fmt.Errorf("operator already has flight %v", flightId)
 	}
 	if exists {
-		return fmt.Errorf("Flight %v already exists", flightId)
+		return fmt.Errorf("flight %v already exists", flightId)
 	}
-	tree := kdtree.Tree{Root: nil, Count: 0}
+	// tree := kdtree.Tree{Root: nil, Count: 0}
 	flight := Flight{
 		FlightId:         flightId,
 		OperatorId:       operatorId,
@@ -180,25 +177,22 @@ func (c *UAVContract) RequestPermit(ctx contractapi.TransactionContextInterface,
 		PermitExpiry:     permitExpiry,
 		BoundaryVertices: vertices,
 		BoundaryFacets:   facets,
-		Tree:             &tree,
-		Status:           "PENDING",
-		Takeoff:          time.Now(),
-		Landing:          time.Now(),
-		Beacons:          make([][3]float64, 0),
-		LastBeaconAt:     time.Now(),
+		// Tree:             &tree,
+		Status:  "PENDING",
+		Beacons: make([][3]float64, 0),
 	}
 	flightJSON, err := json.Marshal(flight)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal flight %v. Error: %v", flightJSON, err)
 	}
 	err = ctx.GetStub().PutState(flightId, flightJSON)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to write to world state. Error: %v", err)
 	}
 	operator.FlightIds = append(operator.FlightIds, flightId)
 	operatorJSON, err = json.Marshal(operator)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal operator %v. Error: %v", operatorJSON, err)
 	}
 	return ctx.GetStub().PutState(operatorId, operatorJSON)
 }
@@ -225,12 +219,12 @@ func (c *UAVContract) EvaluatePermit(ctx contractapi.TransactionContextInterface
 	}
 	flight.Status = decision
 	// TODO: Supposed to build kdtree here (once for the boundary) but cannot since the tree struct is not allowed in ctx
-	if decision == "APPROVED" {
-		// vertices2D := isinside.ConvertFloat64To2D(flight.BoundaryVertices)
-		// facets2D := isinside.ConvertUint64To2D(flight.BoundaryFacets)
-		tree, _, _ := isinside.GenerateKDTreePlus(flight.BoundaryVertices, flight.BoundaryFacets)
-		flight.Tree = tree
-	}
+	// if decision == "APPROVED" {
+	// 	// vertices2D := isinside.ConvertFloat64To2D(flight.BoundaryVertices)
+	// 	// facets2D := isinside.ConvertUint64To2D(flight.BoundaryFacets)
+	// 	tree, _, _ := isinside.GenerateKDTreePlus(flight.BoundaryVertices, flight.BoundaryFacets)
+	// 	flight.Tree = tree
+	// }
 	flightJSON, err = json.Marshal(flight)
 	if err != nil {
 		return err
@@ -354,9 +348,17 @@ func (c *UAVContract) LogBeacons(ctx contractapi.TransactionContextInterface, fl
 	}
 	// TODO: Find if it's possible to get time based on the invocation time
 	// TODO: Add margin of error
-	if int(time.Since(flight.LastBeaconAt).Seconds()) != len(flight.Beacons) {
-		return fmt.Errorf("mismatch in flight %v beacons and invocation time ", flightId)
-	}
+	// TODO: Enable after testing
+	// var secondsPassed int
+	// if !flight.LastBeaconAt.IsZero() {
+	// 	secondsPassed = int(time.Since(flight.LastBeaconAt).Seconds())
+	// } else {
+	// 	secondsPassed = int(time.Since(flight.Takeoff).Seconds())
+	// }
+	// if secondsPassed != len(newBeacons) {
+	// 	return fmt.Errorf("mismatch in flight %v beacons and invocation time, tried to add %v beacons, should have added %v beacons", flightId, len(newBeacons), secondsPassed)
+	// }
+	// TODO: Fix bug where analysis ignores last submitted beacons
 	flight.Beacons = append(flight.Beacons, newBeacons...)
 	txTimestamp, err := ctx.GetStub().GetTxTimestamp()
 	if err != nil {
@@ -372,7 +374,7 @@ func (c *UAVContract) LogBeacons(ctx contractapi.TransactionContextInterface, fl
 		return err
 	}
 	// TODO: Specify 1000 as a contract-wide parameter
-	if len(flight.Beacons) > 1000 {
+	if len(flight.Beacons) > 15 {
 		err = c.AnalyzeBeacons(ctx, flightId)
 	}
 	if err != nil {
@@ -403,14 +405,16 @@ func (c *UAVContract) AnalyzeBeacons(ctx contractapi.TransactionContextInterface
 		return err
 	}
 
+	fmt.Printf("about to get inclusions on %v\nV:%v\nF:%v\nB:%v", flightId, flight.BoundaryVertices, flight.BoundaryFacets, flight.Beacons)
 	inclusions := isinside.GetInclusions(flight.BoundaryVertices, flight.BoundaryFacets, flight.Beacons)
 	for index, inclusion := range inclusions {
 		if !inclusion {
+			fmt.Printf("found violation during %v at %v", flightId, index)
 			c.AddViolation(ctx, flight.OperatorId, flightId, index, "ESCAPE_PERMITTED_REGION")
 			// TODO: Decide report first violation, last violation, all violations?
 		}
 	}
-	flight.Beacons = nil
+	flight.Beacons = make([][3]float64, 0)
 	flightJSON, err = json.Marshal(flight)
 	if err != nil {
 		return err
@@ -503,6 +507,7 @@ func (c *UAVContract) AddViolation(ctx contractapi.TransactionContextInterface, 
 
 	occuredAt := flight.LastBeaconAt.Add(time.Second * time.Duration(-len(flight.Beacons)+beaconIndex+1))
 	violationId := fmt.Sprintf("%v%v%v", operatorId, flightId, occuredAt)
+	fmt.Printf("violation %v occured at %v", violationId, occuredAt)
 	exists, err = c.KeyExists(ctx, violationId)
 	if err != nil {
 		return err
@@ -525,7 +530,40 @@ func (c *UAVContract) AddViolation(ctx contractapi.TransactionContextInterface, 
 	if err != nil {
 		return err
 	}
-	return ctx.GetStub().PutState(violationId, violationJSON)
+	err = ctx.GetStub().PutState(violationId, violationJSON)
+	if err != nil {
+		return err
+	}
+
+	exists, err = c.KeyExists(ctx, operatorId)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("operator %v does not exist", operatorId)
+	}
+	operatorJSON, err := ctx.GetStub().GetState(operatorId)
+	if err != nil {
+		return fmt.Errorf("failed to read from state. Error: %v", err)
+	}
+	if operatorJSON == nil {
+		return fmt.Errorf("operator %v does not exist", operatorId)
+	}
+	var operator Operator
+	err = json.Unmarshal(operatorJSON, &operator)
+	if err != nil {
+		return err
+	}
+	operator.ViolationIds = append(operator.ViolationIds, violationId)
+	operatorJSON, err = json.Marshal(operator)
+	if err != nil {
+		return err
+	}
+	err = ctx.GetStub().PutState(operatorId, operatorJSON)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *UAVContract) UpdateOperatorStatus(ctx contractapi.TransactionContextInterface, operatorId string, status string) error {
@@ -596,21 +634,21 @@ func (c *UAVContract) GetDrone(ctx contractapi.TransactionContextInterface, key 
 	return &object, nil
 }
 
-// func (c *UAVContract) GetFlight(ctx contractapi.TransactionContextInterface, key string) (*Flight, error) {
-// 	objectJSON, err := ctx.GetStub().GetState(key)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to read world state. Error: %v", err)
-// 	}
-// 	if objectJSON == nil {
-// 		return nil, fmt.Errorf("object %s does not exist", key)
-// 	}
-// 	var object Flight
-// 	err = json.Unmarshal(objectJSON, &object)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return &object, nil
-// }
+func (c *UAVContract) GetFlight(ctx contractapi.TransactionContextInterface, key string) (*Flight, error) {
+	objectJSON, err := ctx.GetStub().GetState(key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read world state. Error: %v", err)
+	}
+	if objectJSON == nil {
+		return nil, fmt.Errorf("object %s does not exist", key)
+	}
+	var object Flight
+	err = json.Unmarshal(objectJSON, &object)
+	if err != nil {
+		return nil, err
+	}
+	return &object, nil
+}
 
 func (c *UAVContract) GetViolation(ctx contractapi.TransactionContextInterface, key string) (*Violation, error) {
 	objectJSON, err := ctx.GetStub().GetState(key)
