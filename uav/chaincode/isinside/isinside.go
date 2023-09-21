@@ -178,8 +178,12 @@ func GetDistances(vertices [][3]float64, facets [][3]uint64, query [][3]float64)
 	distances := make([]float64, len(query))
 	for i := 0; i < len(query); i++ {
 		fmt.Println(i)
-		closestPoint, _ := tree.Nearest(kdtree.Point(query[i][:]))
-		closest := [3]float64(closestPoint.(kdtree.Point))
+		closestComparable, _ := tree.Nearest(kdtree.Point(query[i][:]))
+		var closest [3]float64
+		copy(closestComparable.(kdtree.Point)[:], closest[:])
+		// closestPoint := closestComparable.(kdtree.Point)
+		// closestSlice := []float64(closestPoint)
+		// closest := [3]float64(closestSlice)
 		closestIndex := IndexOf(closest, incenters)
 		distances[i] = GetDistance(closest, normals[closestIndex], query[i])
 	}
