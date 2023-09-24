@@ -2,7 +2,6 @@ package isinside
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"os"
 	"strconv"
@@ -201,7 +200,6 @@ func GetInclusions(vertices [][3]float64, facets [][3]uint64, query [][3]float64
 	inclusions := make([]bool, len(distances))
 	for i := range distances {
 		inclusions[i] = distances[i] > 0
-		fmt.Printf("inclusion=%v at i=%v", inclusions[i], i)
 	}
 	return inclusions
 }

@@ -1,0 +1,296 @@
+package contract
+
+import (
+	"encoding/json"
+	"fmt"
+	"madmoh/hlf-uav/isinside"
+	"strconv"
+
+	"github.com/hyperledger/fabric-contract-api-go/contractapi"
+	"golang.org/x/exp/slices"
+)
+
+type FlightsSC struct {
+	contractapi.Contract
+}
+
+// TODO: Additional business logic checks (e.g., if not already active)
+func (c *FlightsSC) LogTakeoff(ctx contractapi.TransactionContextInterface, flightId string) error {
+	operatorId, err := ctx.GetClientIdentity().GetID()
+	if err != nil {
+		return err
+	}
+	exists, err := KeyExists(ctx, operatorId)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("Operator %v does not exist", operatorId)
+	}
+	operatorJSON, err := ctx.GetStub().GetState(operatorId)
+	if err != nil {
+		return fmt.Errorf("failed to read from state. Error: %v", err)
+	}
+	if operatorJSON == nil {
+		return fmt.Errorf("Operator %v does not exist", operatorId)
+	}
+	var operator Operator
+	err = json.Unmarshal(operatorJSON, &operator)
+	if err != nil {
+		return err
+	}
+	if !slices.Contains(operator.FlightIds, flightId) {
+		return fmt.Errorf("flight %v is not associated with operator %v", flightId, operatorId)
+	}
+
+	exists, err = KeyExists(ctx, flightId)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("Flight %v does not exist", flightId)
+	}
+	flightJSON, err := ctx.GetStub().GetState(flightId)
+	if err != nil {
+		return fmt.Errorf("failed to read from state. Error: %v", err)
+	}
+	if flightJSON == nil {
+		return fmt.Errorf("Flight %v does not exist", flightId)
+	}
+	var flight Flight
+	err = json.Unmarshal(flightJSON, &flight)
+	if err != nil {
+		return err
+	}
+
+	flight.Status = "ACTIVE"
+	txTimestamp, err := ctx.GetStub().GetTxTimestamp()
+	if err != nil {
+		return fmt.Errorf("failed to get timestamp for receipt: %v", err)
+	}
+	flight.Takeoff = txTimestamp.AsTime()
+	flightJSON, err = json.Marshal(flight)
+	if err != nil {
+		return err
+	}
+	return ctx.GetStub().PutState(flightId, flightJSON)
+}
+
+// TODO: Additional business logic checks (e.g., if still within permit period)
+func (c *FlightsSC) LogBeacons(ctx contractapi.TransactionContextInterface, flightId string, newBeacons [][3]float64) error {
+	operatorId, err := ctx.GetClientIdentity().GetID()
+	if err != nil {
+		return err
+	}
+	exists, err := KeyExists(ctx, operatorId)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("Operator %v does not exist", operatorId)
+	}
+	operatorJSON, err := ctx.GetStub().GetState(operatorId)
+	if err != nil {
+		return fmt.Errorf("failed to read from state. Error: %v", err)
+	}
+	if operatorJSON == nil {
+		return fmt.Errorf("Operator %v does not exist", operatorId)
+	}
+	var operator Operator
+	err = json.Unmarshal(operatorJSON, &operator)
+	if err != nil {
+		return err
+	}
+	if !slices.Contains(operator.FlightIds, flightId) {
+		return fmt.Errorf("flight %v is not associated with operator %v", flightId, operatorId)
+	}
+
+	exists, err = KeyExists(ctx, flightId)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("Flight %v does not exist", flightId)
+	}
+	flightJSON, err := ctx.GetStub().GetState(flightId)
+	if err != nil {
+		return fmt.Errorf("failed to read from state. Error: %v", err)
+	}
+	if flightJSON == nil {
+		return fmt.Errorf("flight %v does not exist", flightId)
+	}
+	var flight Flight
+	err = json.Unmarshal(flightJSON, &flight)
+	if err != nil {
+		return err
+	}
+
+	if flight.Status != "ACTIVE" {
+		return fmt.Errorf("Flight %v status is not ACTIVE", flightId)
+	}
+	// TODO: Find if it's possible to get time based on the invocation time
+	// TODO: Add margin of error
+	// TODO: Enable after testing
+	// var secondsPassed int
+	// if !flight.LastBeaconAt.IsZero() {
+	// 	secondsPassed = int(time.Since(flight.LastBeaconAt).Seconds())
+	// } else {
+	// 	secondsPassed = int(time.Since(flight.Takeoff).Seconds())
+	// }
+	// if secondsPassed != len(newBeacons) {
+	// 	return fmt.Errorf("mismatch in flight %v beacons and invocation time, tried to add %v beacons, should have added %v beacons", flightId, len(newBeacons), secondsPassed)
+	// }
+	// TODO: Fix bug where analysis ignores last submitted beacons
+	flight.Beacons = append(flight.Beacons, newBeacons...)
+	txTimestamp, err := ctx.GetStub().GetTxTimestamp()
+	if err != nil {
+		return fmt.Errorf("failed to get timestamp for receipt: %v", err)
+	}
+	flight.LastBeaconAt = txTimestamp.AsTime()
+	flightJSON, err = json.Marshal(flight)
+	if err != nil {
+		return err
+	}
+	err = ctx.GetStub().PutState(flightId, flightJSON)
+	if err != nil {
+		return err
+	}
+	// TODO: Specify 1000 as a contract-wide parameter
+	if len(flight.Beacons) > 15 {
+		err = c.AnalyzeBeacons(ctx, flightId)
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// TODO: Function design can be much improved
+func (c *FlightsSC) AnalyzeBeacons(ctx contractapi.TransactionContextInterface, flightId string) error {
+	exists, err := KeyExists(ctx, flightId)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("Flight %v does not exist", flightId)
+	}
+	flightJSON, err := ctx.GetStub().GetState(flightId)
+	if err != nil {
+		return fmt.Errorf("failed to read from state. Error: %v", err)
+	}
+	if flightJSON == nil {
+		return fmt.Errorf("Flight %v does not exist", flightId)
+	}
+	var flight Flight
+	err = json.Unmarshal(flightJSON, &flight)
+	if err != nil {
+		return err
+	}
+
+	inclusions := isinside.GetInclusions(flight.BoundaryVertices, flight.BoundaryFacets, flight.Beacons)
+	for index, inclusion := range inclusions {
+		if !inclusion {
+
+			resp := ctx.GetStub().InvokeChaincode(
+				"abyssarCC",
+				[][]byte{
+					[]byte("ViolationsSC:AddViolation"),
+					[]byte(flight.OperatorId),
+					[]byte(flightId),
+					[]byte(strconv.Itoa(index)),
+					[]byte("ESCAPE_PERMITTED_REGION"),
+				},
+				"",
+			)
+			if resp.Status != 200 {
+				return fmt.Errorf("error in calling AddViolation. Resp: %v. \n\n%v", resp.Message, resp)
+			}
+			// violationsSC.AddViolation(ctx, flight.OperatorId, flightId, index, "ESCAPE_PERMITTED_REGION")
+			// TODO: Decide report first violation, last violation, all violations?
+		}
+	}
+	flight.Beacons = make([][3]float64, 0)
+	flightJSON, err = json.Marshal(flight)
+	if err != nil {
+		return err
+	}
+	return ctx.GetStub().PutState(flightId, flightJSON)
+}
+
+// TODO: Additional business logic checks
+func (c *FlightsSC) LogLanding(ctx contractapi.TransactionContextInterface, flightId string) error {
+	operatorId, err := ctx.GetClientIdentity().GetID()
+	if err != nil {
+		return err
+	}
+	exists, err := KeyExists(ctx, operatorId)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("Operator %v does not exist", operatorId)
+	}
+	operatorJSON, err := ctx.GetStub().GetState(operatorId)
+	if err != nil {
+		return fmt.Errorf("failed to read from state. Error: %v", err)
+	}
+	if operatorJSON == nil {
+		return fmt.Errorf("Operator %v does not exist", operatorId)
+	}
+	var operator Operator
+	err = json.Unmarshal(operatorJSON, &operator)
+	if err != nil {
+		return err
+	}
+	if !slices.Contains(operator.FlightIds, flightId) {
+		return fmt.Errorf("Flight %v is not associated with operator %v", flightId, operatorId)
+	}
+
+	exists, err = KeyExists(ctx, flightId)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("Flight %v does not exist", flightId)
+	}
+	flightJSON, err := ctx.GetStub().GetState(flightId)
+	if err != nil {
+		return fmt.Errorf("failed to read from state. Error: %v", err)
+	}
+	if flightJSON == nil {
+		return fmt.Errorf("Flight %v does not exist", flightId)
+	}
+	var flight Flight
+	err = json.Unmarshal(flightJSON, &flight)
+	if err != nil {
+		return err
+	}
+
+	flight.Status = "PENDING"
+	txTimestamp, err := ctx.GetStub().GetTxTimestamp()
+	if err != nil {
+		return fmt.Errorf("failed to get timestamp for receipt: %v", err)
+	}
+	flight.Landing = txTimestamp.AsTime()
+	flightJSON, err = json.Marshal(flight)
+	if err != nil {
+		return err
+	}
+	return ctx.GetStub().PutState(flightId, flightJSON)
+}
+
+func (c *FlightsSC) GetFlight(ctx contractapi.TransactionContextInterface, key string) (*Flight, error) {
+	objectJSON, err := ctx.GetStub().GetState(key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read world state. Error: %v", err)
+	}
+	if objectJSON == nil {
+		return nil, fmt.Errorf("object %s does not exist", key)
+	}
+	var object Flight
+	err = json.Unmarshal(objectJSON, &object)
+	if err != nil {
+		return nil, err
+	}
+	return &object, nil
+}

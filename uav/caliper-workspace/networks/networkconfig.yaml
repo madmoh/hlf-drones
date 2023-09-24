@@ -5,10 +5,9 @@ caliper:
   blockchain: fabric
 
 channels:
-  - channelName: carschannel
+  - channelName: uavchannel
     contracts:
-    - id: cars
-    - id: basic
+    - id: uav
 
 organizations:
   - mspid: Org1MSP

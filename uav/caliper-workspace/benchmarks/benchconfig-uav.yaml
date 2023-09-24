@@ -1,10 +1,9 @@
 test:
-  name: cars-contract-benchmark
-  description: "Create some cars. Query the cars. Delete the cars."
+  name: uav-contract-benchmark
   workers:
-    number: 4
+    number: 48
   rounds:
-  - label: queryCar
+  - label: addOperators
     txDuration: 15
     rateControl:
       type: fixed-rate
@@ -18,12 +17,8 @@ test:
     #     sampleInterval: 10
     #     includeFailed: true
     workload:
-      module: workload/queryCar.js
+      module: workload/addOperators.js
       arguments:
-        cars: 10
-        contractId: cars
-monitors:
-  transaction:
-  - module: logging
-    options:
-      fred: 1
+        operators: 100
+        contractId: uav
+
