@@ -12,39 +12,39 @@ type ViolationsSC struct {
 	contractapi.Contract
 }
 
-func (c *ViolationsSC) AddViolation(ctx contractapi.TransactionContextInterface, operatorId string, flightId string, beaconIndex int, reason string) error {
+func (c *ViolationsSC) AddViolation(ctx contractapi.TransactionContextInterface, operatorId string, flightId string, beaconIndex int, reason string) (string, error) {
 	exists, err := KeyExists(ctx, flightId)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if !exists {
-		return fmt.Errorf("Flight %v does not exist", flightId)
+		return "", fmt.Errorf("Flight %v does not exist", flightId)
 	}
 	flightJSON, err := ctx.GetStub().GetState(flightId)
 	if err != nil {
-		return fmt.Errorf("failed to read from state. Error: %v", err)
+		return "", fmt.Errorf("failed to read from state. Error: %v", err)
 	}
 	if flightJSON == nil {
-		return fmt.Errorf("Flight %v does not exist", flightId)
+		return "", fmt.Errorf("Flight %v does not exist", flightId)
 	}
 	var flight Flight
 	err = json.Unmarshal(flightJSON, &flight)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	occuredAt := flight.LastBeaconAt.Add(time.Second * time.Duration(-len(flight.Beacons)+beaconIndex+1))
 	violationId := fmt.Sprintf("%v%v%v", operatorId, flightId, occuredAt)
 	exists, err = KeyExists(ctx, violationId)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if exists {
-		return fmt.Errorf("Violation %v already exists", violationId)
+		return "", fmt.Errorf("Violation %v already exists", violationId)
 	}
 	txTimestamp, err := ctx.GetStub().GetTxTimestamp()
 	if err != nil {
-		return fmt.Errorf("failed to get timestamp for receipt: %v", err)
+		return "", fmt.Errorf("failed to get timestamp for receipt: %v", err)
 	}
 	violation := Violation{
 		OccuredAt:  occuredAt,
@@ -55,42 +55,42 @@ func (c *ViolationsSC) AddViolation(ctx contractapi.TransactionContextInterface,
 	}
 	violationJSON, err := json.Marshal(violation)
 	if err != nil {
-		return err
+		return "", err
 	}
 	err = ctx.GetStub().PutState(violationId, violationJSON)
 	if err != nil {
-		return err
+		return violationId, err
 	}
 
 	exists, err = KeyExists(ctx, operatorId)
 	if err != nil {
-		return err
+		return violationId, err
 	}
 	if !exists {
-		return fmt.Errorf("operator %v does not exist", operatorId)
+		return violationId, fmt.Errorf("operator %v does not exist", operatorId)
 	}
 	operatorJSON, err := ctx.GetStub().GetState(operatorId)
 	if err != nil {
-		return fmt.Errorf("failed to read from state. Error: %v", err)
+		return violationId, fmt.Errorf("failed to read from state. Error: %v", err)
 	}
 	if operatorJSON == nil {
-		return fmt.Errorf("operator %v does not exist", operatorId)
+		return violationId, fmt.Errorf("operator %v does not exist", operatorId)
 	}
 	var operator Operator
 	err = json.Unmarshal(operatorJSON, &operator)
 	if err != nil {
-		return err
+		return violationId, err
 	}
 	operator.ViolationIds = append(operator.ViolationIds, violationId)
 	operatorJSON, err = json.Marshal(operator)
 	if err != nil {
-		return err
+		return violationId, err
 	}
 	err = ctx.GetStub().PutState(operatorId, operatorJSON)
 	if err != nil {
-		return err
+		return violationId, err
 	}
-	return nil
+	return violationId, nil
 }
 
 func (c *ViolationsSC) GetViolation(ctx contractapi.TransactionContextInterface, key string) (*Violation, error) {
@@ -107,4 +107,15 @@ func (c *ViolationsSC) GetViolation(ctx contractapi.TransactionContextInterface,
 		return nil, err
 	}
 	return &object, nil
+}
+
+func (c *ViolationsSC) DeleteViolation(ctx contractapi.TransactionContextInterface, violationId string) error {
+	exists, err := KeyExists(ctx, violationId)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("Violation %v does not exist", violationId)
+	}
+	return ctx.GetStub().DelState(violationId)
 }

@@ -5,9 +5,9 @@ caliper:
   blockchain: fabric
 
 channels:
-  - channelName: uavchannel
+  - channelName: abyssar
     contracts:
-    - id: uav
+    - id: abyssarCC # says contractId but it's chaincode name
 
 organizations:
   - mspid: Org1MSP

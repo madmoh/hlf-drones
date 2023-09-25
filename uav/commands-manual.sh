@@ -3,14 +3,16 @@
 
 # Execute all commands from test-network directory
 
+cd <.../fabric-samples/test-network/>
+
 export PATH=$PATH:${PWD}/../bin:$PATH
 export FABRIC_CFG_PATH=$PWD/../config/
 
 ./network.sh down
 
-./network.sh up -verbose
+./network.sh up
 
-./network.sh createChannel -c abyssar -verbose
+./network.sh createChannel -c abyssar
 
 ./network.sh deployCC -c abyssar -ccn abyssarCC -ccl go -ccv 1.0 -ccs 1 -ccp "../../chaincode" -verbose
 
@@ -142,3 +144,5 @@ peer chaincode invoke \
 	--peerAddresses localhost:9051 --tlsRootCertFiles "${PWD}/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt" \
 	--orderer localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem" \
 	--ctor '{"function":"UpdateOperatorStatus","Args":["'${OPERATOR_ID}'","TEMP_BAN_APPEAL"]}'
+
+peer chaincode query --channelID abyssar --name abyssarCC --ctor '{"Args":["RecordsSC:GetOperator","'${OPERATOR_ID}'"]}'

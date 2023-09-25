@@ -12,12 +12,10 @@ export FABRIC_CFG_PATH=$PWD/../config/
 
 ./network.sh down
 
-./network.sh up
+./network.sh up createChannel -c abyssar
 
-./network.sh createChannel -c uavchannel
+./network.sh deployCC -c abyssar -ccn abyssarCC -ccl go -ccv 1.0 -ccs 1 -ccp "../../chaincode"
 
-./network.sh deployCC -c uavchannel -ccn uav -ccl go -ccv 1.0 -ccs 1 -ccp "../../chaincode"
+cd <.../uav/caliper-workspace/>
 
-cd <.../cars/caliper-workspace>
-
-bun caliper launch manager --caliper-workspace ./ --caliper-networkconfig networks/networkconfig.yaml --caliper-benchconfig benchmarks/benchconfig-uav.yaml --caliper-flow-only-test
+bun caliper launch manager --caliper-workspace ./ --caliper-networkconfig networks/networkconfig.yaml --caliper-benchconfig benchmarks/benchconfig-records.yaml --caliper-flow-only-test

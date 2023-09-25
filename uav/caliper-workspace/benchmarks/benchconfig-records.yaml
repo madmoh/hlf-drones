@@ -1,14 +1,14 @@
 test:
-  name: uav-contract-benchmark
+  name: records-contract-benchmark
   workers:
-    number: 48
+    number: 20
   rounds:
   - label: addOperators
-    txDuration: 15
+    txDuration: 10
     rateControl:
       type: fixed-rate
       opts:
-        tps: 2000
+        tps: 300
     # rateControl:
     #   type: maximum-rate
     #   opts:
@@ -19,6 +19,5 @@ test:
     workload:
       module: workload/addOperators.js
       arguments:
-        operators: 100
-        contractId: uav
+        contractId: abyssarCC # says contractId but it's chaincode name
 

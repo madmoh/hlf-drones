@@ -2,59 +2,49 @@
 
 const { WorkloadModuleBase } = require('@hyperledger/caliper-core');
 
-class MyWorkload extends WorkloadModuleBase {
+class AddOperatorWorkload extends WorkloadModuleBase {
 	constructor() {
 		super();
 	}
 
-	// async initializeWorkloadModule(workerIndex, totalWorkers, roundIndex, roundArguments, sutAdapter, sutContext) {
-	// 	await super.initializeWorkloadModule(workerIndex, totalWorkers, roundIndex, roundArguments, sutAdapter, sutContext);
-
-	// 	for (let i = 0; i < this.roundArguments.cars; i++) {
-	// 		const vin = `${this.workerIndex}_${i}`
-	// 		console.log(`Worker ${this.workerIndex}: Creating car ${vin}`)
-	// 		const request = {
-	// 			contractId: this.roundArguments.contractId,
-	// 			contractFunction: 'CreateCar',
-	// 			invokerIdentity: 'User1',
-	// 			contractArguments: ['plink', '4', 'tayoto', 'mahmadto', '1000000', vin],
-	// 			readOnly: false
-	// 		}
-	// 		await this.sutAdapter.sendRequests(request)
-	// 	}
-	// }
+	async initializeWorkloadModule(workerIndex, totalWorkers, roundIndex, roundArguments, sutAdapter, sutContext) {
+		await super.initializeWorkloadModule(workerIndex, totalWorkers, roundIndex, roundArguments, sutAdapter, sutContext);
+		this.I = new Array(this.totalWorkers).fill(0)
+	}
 
 	async submitTransaction() {
-		const operatorId = `${this.workerIndex}_${Date.now()}`
+		const operatorId = `${this.workerIndex}_${this.I[this.workerIndex]}`
+		this.I[this.workerIndex]++
 		const request = {
 			contractId: this.roundArguments.contractId,
-			contractFunction: 'AddOperator',
+			contractFunction: 'RecordsSC:AddOperator',
 			invokerIdentity: 'User1',
 			contractArguments: [operatorId],
 			readOnly: false
 		}
-		// console.log(`Worker ${this.workerIndex}: Calling AddOperator(${operatorId})`)
 		await this.sutAdapter.sendRequests(request)
 	}
 
-	// async cleanupWorkloadModule() {
-	// 	for (let i = 0; i < this.roundArguments.cars; i++) {
-	// 		const vin = `${this.workerIndex}_${i}`
-	// 		console.log(`Worker ${this.workerIndex}: Deleting car ${vin}`)
-	// 		const request = {
-	// 			contractId: this.roundArguments.contractId,
-	// 			contractFunction: 'DeleteCar',
-	// 			invokerIdentity: 'User1',
-	// 			contractArguments: [vin],
-	// 			readOnly: false
-	// 		}
-	// 		await this.sutAdapter.sendRequests(request)
-	// 	}
-	// }
+	async cleanupWorkloadModule() {
+		for (let w = 0; w < this.totalWorkers; w++) {
+			for (let i = 0; i < this.I[w]; i++) {
+				const operatorId = `${w}_${i}`
+				console.log(`Worker ${w}: Deleting operator ${operatorId}`)
+				const requestDeleteOperator = {
+					contractId: this.roundArguments.contractId,
+					contractFunction: 'RecordsSC:DeleteOperator',
+					invokerIdentity: 'User1',
+					contractArguments: [operatorId],
+					readOnly: false
+				}
+				await this.sutAdapter.sendRequests(requestDeleteOperator)
+			}
+		}
+	}
 }
 
 function createWorkloadModule() {
-	return new MyWorkload();
+	return new AddOperatorWorkload();
 }
 
 module.exports.createWorkloadModule = createWorkloadModule;

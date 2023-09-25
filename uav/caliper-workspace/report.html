@@ -126,7 +126,7 @@
             <ul>
                 <h3>&nbspBasic information</h3>
                 <li>DLT: &nbsp<span style="font-weight: 500;">fabric</span></li>
-                <li>Name: &nbsp<span style="font-weight: 500;">uav-contract-benchmark</span></li>
+                <li>Name: &nbsp<span style="font-weight: 500;">records-contract-benchmark</span></li>
                 <li>Description: &nbsp<span style="font-weight: 500;"></span></li>
                 <li>Benchmark Rounds: &nbsp<span style="font-weight: 500;">1</span></li>
                 <li><a href="#benchmarkInfo">Details</a></li>
@@ -152,18 +152,18 @@
                     </tr>
 
                     <tr>
-                         <td>addOperators</td> <td>29590</td> <td>0</td> <td>1948.2</td> <td>42.29</td> <td>17.79</td> <td>30.35</td> <td>531.1</td>
+                         <td>addOperators</td> <td>531</td> <td>2489</td> <td>300.7</td> <td>1.75</td> <td>0.04</td> <td>0.67</td> <td>269.6</td>
                     </tr>
                 </table>
             </div>
             <div style="border-bottom: 1px solid #d9d9d9; padding-bottom: 10px;" id="addOperators">
                 <h2>Benchmark round: addOperators</h2>
                 <p></p>
-                <pre style="overflow: visible;white-space: pre-wrap;max-height:100%;">txDuration: 15
+                <pre style="overflow: visible;white-space: pre-wrap;max-height:100%;">txDuration: 10
 rateControl:
   type: fixed-rate
   opts:
-    tps: 2000
+    tps: 300
 </pre>
                         <h3>Performance metrics for addOperators</h3>
                             <table style="min-width: 100%;">
@@ -171,7 +171,7 @@ rateControl:
                                      <th>Name</th> <th>Succ</th> <th>Fail</th> <th>Send Rate (TPS)</th> <th>Max Latency (s)</th> <th>Min Latency (s)</th> <th>Avg Latency (s)</th> <th>Throughput (TPS)</th>
                                 </tr>
                                 <tr>
-                                     <td>addOperators</td> <td>29590</td> <td>0</td> <td>1948.2</td> <td>42.29</td> <td>17.79</td> <td>30.35</td> <td>531.1</td>
+                                     <td>addOperators</td> <td>531</td> <td>2489</td> <td>300.7</td> <td>1.75</td> <td>0.04</td> <td>0.67</td> <td>269.6</td>
                                 </tr>
                             </table>
                         <h3>Resource utilization for addOperators</h3>
@@ -180,21 +180,20 @@ rateControl:
             <div style="border-bottom: 1px solid #d9d9d9; padding-bottom: 10px;">
                 <h2>Test Environment</h2>
                 <h3>benchmark config</h3>
-                <pre id="benchmarkInfo" style="overflow: visible;white-space: pre-wrap;max-height:100%;">name: uav-contract-benchmark
+                <pre id="benchmarkInfo" style="overflow: visible;white-space: pre-wrap;max-height:100%;">name: records-contract-benchmark
 workers:
-  number: 48
+  number: 20
 rounds:
   - label: addOperators
-    txDuration: 15
+    txDuration: 10
     rateControl:
       type: fixed-rate
       opts:
-        tps: 2000
+        tps: 300
     workload:
       module: workload&#x2F;addOperators.js
       arguments:
-        operators: 100
-        contractId: uav
+        contractId: abyssarCC
 </pre>
                 <h3>SUT</h3>
                 <pre id="sutdetails">not provided</pre>

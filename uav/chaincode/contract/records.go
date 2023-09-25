@@ -45,6 +45,17 @@ func (c *RecordsSC) AddOperator(ctx contractapi.TransactionContextInterface, ope
 	return ctx.GetStub().PutState(operatorId, operatorJSON)
 }
 
+func (c *RecordsSC) DeleteOperator(ctx contractapi.TransactionContextInterface, operatorId string) error {
+	exists, err := KeyExists(ctx, operatorId)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("Operator %v does not exist", operatorId)
+	}
+	return ctx.GetStub().DelState(operatorId)
+}
+
 // TODO: Make some link between the drone and operator
 func (c *RecordsSC) AddDrone(ctx contractapi.TransactionContextInterface, droneId string, expiry time.Time) error {
 	// TODO: Similar checks to AddOperator
@@ -65,6 +76,17 @@ func (c *RecordsSC) AddDrone(ctx contractapi.TransactionContextInterface, droneI
 		return err
 	}
 	return ctx.GetStub().PutState(droneId, droneJSON)
+}
+
+func (c *RecordsSC) DeleteDrone(ctx contractapi.TransactionContextInterface, dronerId string) error {
+	exists, err := KeyExists(ctx, dronerId)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("Drone %v does not exist", dronerId)
+	}
+	return ctx.GetStub().DelState(dronerId)
 }
 
 // TODO: More business logic checks (caller identity)
@@ -97,11 +119,11 @@ func (c *RecordsSC) AddCertificate(ctx contractapi.TransactionContextInterface, 
 	return ctx.GetStub().PutState(operatorId, operatorJSON)
 }
 
-func (c *RecordsSC) RequestPermit(ctx contractapi.TransactionContextInterface, flightId string, droneId string, permitEffective time.Time, permitExpiry time.Time, vertices [][3]float64, facets [][3]uint64) error {
-	operatorId, err := ctx.GetClientIdentity().GetID()
-	if err != nil {
-		return fmt.Errorf("cannot get client identity. Error: %v", err)
-	}
+func (c *RecordsSC) RequestPermit(ctx contractapi.TransactionContextInterface, operatorId string, flightId string, droneId string, permitEffective time.Time, permitExpiry time.Time, vertices [][3]float64, facets [][3]uint64) error {
+	// operatorId, err := ctx.GetClientIdentity().GetID()
+	// if err != nil {
+	// 	return fmt.Errorf("cannot get client identity. Error: %v", err)
+	// }
 	exists, err := KeyExists(ctx, operatorId)
 	if err != nil {
 		return err
@@ -187,6 +209,17 @@ func (c *RecordsSC) EvaluatePermit(ctx contractapi.TransactionContextInterface, 
 		return err
 	}
 	return ctx.GetStub().PutState(flightId, flightJSON)
+}
+
+func (c *RecordsSC) DeleteFlight(ctx contractapi.TransactionContextInterface, flightId string) error {
+	exists, err := KeyExists(ctx, flightId)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("Flight %v does not exist", flightId)
+	}
+	return ctx.GetStub().DelState(flightId)
 }
 
 func (c *RecordsSC) UpdateOperatorStatus(ctx contractapi.TransactionContextInterface, operatorId string, status string) error {

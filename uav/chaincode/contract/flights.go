@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"madmoh/hlf-uav/isinside"
-	"strconv"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"golang.org/x/exp/slices"
@@ -15,11 +14,11 @@ type FlightsSC struct {
 }
 
 // TODO: Additional business logic checks (e.g., if not already active)
-func (c *FlightsSC) LogTakeoff(ctx contractapi.TransactionContextInterface, flightId string) error {
-	operatorId, err := ctx.GetClientIdentity().GetID()
-	if err != nil {
-		return err
-	}
+func (c *FlightsSC) LogTakeoff(ctx contractapi.TransactionContextInterface, operatorId string, flightId string) error {
+	// operatorId, err := ctx.GetClientIdentity().GetID()
+	// if err != nil {
+	// 	return err
+	// }
 	exists, err := KeyExists(ctx, operatorId)
 	if err != nil {
 		return err
@@ -77,11 +76,11 @@ func (c *FlightsSC) LogTakeoff(ctx contractapi.TransactionContextInterface, flig
 }
 
 // TODO: Additional business logic checks (e.g., if still within permit period)
-func (c *FlightsSC) LogBeacons(ctx contractapi.TransactionContextInterface, flightId string, newBeacons [][3]float64) error {
-	operatorId, err := ctx.GetClientIdentity().GetID()
-	if err != nil {
-		return err
-	}
+func (c *FlightsSC) LogBeacons(ctx contractapi.TransactionContextInterface, operatorId string, flightId string, newBeacons [][3]float64) error {
+	// operatorId, err := ctx.GetClientIdentity().GetID()
+	// if err != nil {
+	// 	return err
+	// }
 	exists, err := KeyExists(ctx, operatorId)
 	if err != nil {
 		return err
@@ -156,7 +155,7 @@ func (c *FlightsSC) LogBeacons(ctx contractapi.TransactionContextInterface, flig
 		return err
 	}
 	// TODO: Specify 1000 as a contract-wide parameter
-	if len(flight.Beacons) > 15 {
+	if len(flight.Beacons) > 120 {
 		err = c.AnalyzeBeacons(ctx, flightId)
 	}
 	if err != nil {
@@ -191,20 +190,22 @@ func (c *FlightsSC) AnalyzeBeacons(ctx contractapi.TransactionContextInterface, 
 	for index, inclusion := range inclusions {
 		if !inclusion {
 
-			resp := ctx.GetStub().InvokeChaincode(
-				"abyssarCC",
-				[][]byte{
-					[]byte("ViolationsSC:AddViolation"),
-					[]byte(flight.OperatorId),
-					[]byte(flightId),
-					[]byte(strconv.Itoa(index)),
-					[]byte("ESCAPE_PERMITTED_REGION"),
-				},
-				"",
-			)
-			if resp.Status != 200 {
-				return fmt.Errorf("error in calling AddViolation. Resp: %v. \n\n%v", resp.Message, resp)
-			}
+			// resp := ctx.GetStub().InvokeChaincode(
+			// 	"abyssarCC",
+			// 	[][]byte{
+			// 		[]byte("ViolationsSC:AddViolation"),
+			// 		[]byte(flight.OperatorId),
+			// 		[]byte(flightId),
+			// 		[]byte(strconv.Itoa(index)),
+			// 		[]byte("ESCAPE_PERMITTED_REGION"),
+			// 	},
+			// 	"",
+			// )
+			// if resp.Status != 200 {
+			// 	return fmt.Errorf("error in calling AddViolation. Resp: %v. \n\n%v", resp.Message, resp)
+			// }
+			violationsSC := ViolationsSC{}
+			violationsSC.AddViolation(ctx, flight.OperatorId, flightId, index, "ESCAPE_PERMITTED_REGION")
 			// violationsSC.AddViolation(ctx, flight.OperatorId, flightId, index, "ESCAPE_PERMITTED_REGION")
 			// TODO: Decide report first violation, last violation, all violations?
 		}
@@ -218,11 +219,11 @@ func (c *FlightsSC) AnalyzeBeacons(ctx contractapi.TransactionContextInterface, 
 }
 
 // TODO: Additional business logic checks
-func (c *FlightsSC) LogLanding(ctx contractapi.TransactionContextInterface, flightId string) error {
-	operatorId, err := ctx.GetClientIdentity().GetID()
-	if err != nil {
-		return err
-	}
+func (c *FlightsSC) LogLanding(ctx contractapi.TransactionContextInterface, operatorId string, flightId string) error {
+	// operatorId, err := ctx.GetClientIdentity().GetID()
+	// if err != nil {
+	// 	return err
+	// }
 	exists, err := KeyExists(ctx, operatorId)
 	if err != nil {
 		return err
