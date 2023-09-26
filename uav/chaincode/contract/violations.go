@@ -34,7 +34,7 @@ func (c *ViolationsSC) AddViolation(ctx contractapi.TransactionContextInterface,
 	}
 
 	occuredAt := flight.LastBeaconAt.Add(time.Second * time.Duration(-len(flight.Beacons)+beaconIndex+1))
-	violationId := fmt.Sprintf("%v%v%v", operatorId, flightId, occuredAt)
+	violationId := fmt.Sprintf("%v%v%v", operatorId, flightId, occuredAt.Unix())
 	exists, err = KeyExists(ctx, violationId)
 	if err != nil {
 		return "", err

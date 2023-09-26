@@ -10,9 +10,7 @@ export FABRIC_CFG_PATH=$PWD/../config/
 
 ./network.sh down
 
-./network.sh up
-
-./network.sh createChannel -c abyssar
+./network.sh up createChannel -c abyssar
 
 ./network.sh deployCC -c abyssar -ccn abyssarCC -ccl go -ccv 1.0 -ccs 1 -ccp "../../chaincode"
 

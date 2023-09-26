@@ -124,26 +124,26 @@ func (c *RecordsSC) RequestPermit(ctx contractapi.TransactionContextInterface, o
 	// if err != nil {
 	// 	return fmt.Errorf("cannot get client identity. Error: %v", err)
 	// }
-	exists, err := KeyExists(ctx, operatorId)
-	if err != nil {
-		return err
-	}
-	if !exists {
-		return fmt.Errorf("operator (%v) does not exist", operatorId)
-	}
+	// exists, err := KeyExists(ctx, operatorId)
+	// if err != nil {
+	// 	return err
+	// }
+	// if !exists {
+	// 	return fmt.Errorf("operator %v does not exist", operatorId)
+	// }
 	operatorJSON, err := ctx.GetStub().GetState(operatorId)
 	if err != nil {
 		return err
 	}
 	if operatorJSON == nil {
-		return fmt.Errorf("operator %v is empty", operatorId)
+		return fmt.Errorf("operator %v does not exist", operatorId)
 	}
 	var operator Operator
 	err = json.Unmarshal(operatorJSON, &operator)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal. Error: %v", err)
 	}
-	exists = slices.Contains(operator.FlightIds, flightId)
+	exists := slices.Contains(operator.FlightIds, flightId)
 	if exists {
 		return fmt.Errorf("operator already has flight %v", flightId)
 	}
@@ -167,7 +167,7 @@ func (c *RecordsSC) RequestPermit(ctx contractapi.TransactionContextInterface, o
 	}
 	err = ctx.GetStub().PutState(flightId, flightJSON)
 	if err != nil {
-		return fmt.Errorf("failed to write to world state")
+		return err
 	}
 	operator.FlightIds = append(operator.FlightIds, flightId)
 	operatorJSON, err = json.Marshal(operator)
@@ -254,7 +254,7 @@ func (c *RecordsSC) UpdateOperatorStatus(ctx contractapi.TransactionContextInter
 func (c *RecordsSC) GetOperator(ctx contractapi.TransactionContextInterface, key string) (*Operator, error) {
 	objectJSON, err := ctx.GetStub().GetState(key)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read world state. Error: %v", err)
+		return nil, err
 	}
 	if objectJSON == nil {
 		return nil, fmt.Errorf("object %s does not exist", key)
@@ -270,7 +270,7 @@ func (c *RecordsSC) GetOperator(ctx contractapi.TransactionContextInterface, key
 func (c *RecordsSC) GetDrone(ctx contractapi.TransactionContextInterface, key string) (*Drone, error) {
 	objectJSON, err := ctx.GetStub().GetState(key)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read world state. Error: %v", err)
+		return nil, err
 	}
 	if objectJSON == nil {
 		return nil, fmt.Errorf("object %s does not exist", key)

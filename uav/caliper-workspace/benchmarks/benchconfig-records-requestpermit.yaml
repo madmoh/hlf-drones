@@ -1,15 +1,15 @@
 test:
   name: records-contract-benchmark
   workers:
-    number: 1
+    number: 40
   rounds:
-  - label: logBeacons
+  - label: requestPermits
     # txDuration: 30
-    txNumber: 1
+    txNumber: 2000
     rateControl:
       type: fixed-rate
       opts:
-        tps: 1
+        tps: 500
     # rateControl:
     #   type: maximum-rate
     #   opts:
@@ -18,11 +18,11 @@ test:
     #     sampleInterval: 10
     #     includeFailed: true
     workload:
-      module: workload/logBeacons.js
+      module: workload/requestPermits.js
       arguments:
-        operatorsCount: 1
-        flightsPerOperator: 1
-        beaconsPerLog: 2
-        violationEvery: 1200 # 1 violation every ... beacons
+        operatorsPerWorker: 20
+        boundariesPerPermit: 1
+        verticesPerBoundary: 1
+        facetsPerBoundary: 1
         contractId: abyssarCC # says contractId but it's chaincode name
 

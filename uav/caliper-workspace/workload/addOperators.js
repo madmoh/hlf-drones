@@ -26,10 +26,12 @@ class AddOperatorWorkload extends WorkloadModuleBase {
 	}
 
 	async cleanupWorkloadModule() {
+		let sum = 0
 		for (let w = 0; w < this.totalWorkers; w++) {
 			for (let i = 0; i < this.I[w]; i++) {
+				sum += this.I[w]
 				const operatorId = `${w}_${i}`
-				console.log(`Worker ${w}: Deleting operator ${operatorId}`)
+				// console.log(`Worker ${w}: Deleting operator ${operatorId}`)
 				const requestDeleteOperator = {
 					contractId: this.roundArguments.contractId,
 					contractFunction: 'RecordsSC:DeleteOperator',
@@ -40,6 +42,7 @@ class AddOperatorWorkload extends WorkloadModuleBase {
 				await this.sutAdapter.sendRequests(requestDeleteOperator)
 			}
 		}
+		console.log(`Deleted ${sum} operators`)
 	}
 }
 

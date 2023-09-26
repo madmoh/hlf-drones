@@ -1,7 +1,6 @@
 package contract
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
@@ -53,7 +52,7 @@ type Violation struct {
 func KeyExists(ctx contractapi.TransactionContextInterface, key string) (bool, error) {
 	valueJSON, err := ctx.GetStub().GetState(key)
 	if err != nil {
-		return false, fmt.Errorf("failed to read world state. Error: %v", err)
+		return false, err
 	}
 	return valueJSON != nil, nil
 }
