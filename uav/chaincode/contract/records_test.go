@@ -37,7 +37,7 @@ type clientIdentity interface {
 	cid.ClientIdentity
 }
 
-func TestAddOperator(t *testing.T) {
+func TestAddOperatorSuccess(t *testing.T) {
 	chaincodeStub := &mocks.ChaincodeStub{}
 	transactionContext := &mocks.TransactionContext{}
 	transactionContext.GetStubReturns(chaincodeStub)
@@ -45,17 +45,32 @@ func TestAddOperator(t *testing.T) {
 	recordsSC := contract.RecordsSC{}
 	err := error(nil)
 
-	// Case: Key doesn't exist, no error in retrieving the state
 	chaincodeStub.GetStateReturns(nil, nil)
 	err = recordsSC.AddOperator(transactionContext, "test-operator")
 	require.NoError(t, err)
+}
 
-	// Case: Key doesn't exist, error in retrieving the state
+func TestAddOperatorCatchStateError(t *testing.T) {
+	chaincodeStub := &mocks.ChaincodeStub{}
+	transactionContext := &mocks.TransactionContext{}
+	transactionContext.GetStubReturns(chaincodeStub)
+
+	recordsSC := contract.RecordsSC{}
+	err := error(nil)
+
 	chaincodeStub.GetStateReturns(nil, fmt.Errorf("unable to retrieve asset"))
 	err = recordsSC.AddOperator(transactionContext, "test-operator")
 	require.EqualError(t, err, "failed to read world state. Error: unable to retrieve asset")
+}
 
-	// Case: Key exists, no error in retrieving the state
+func TestAddOperatorCatchDuplicateError(t *testing.T) {
+	chaincodeStub := &mocks.ChaincodeStub{}
+	transactionContext := &mocks.TransactionContext{}
+	transactionContext.GetStubReturns(chaincodeStub)
+
+	recordsSC := contract.RecordsSC{}
+	err := error(nil)
+
 	chaincodeStub.GetStateReturns([]byte{}, nil)
 	err = recordsSC.AddOperator(transactionContext, "test-operator")
 	require.EqualError(t, err, "Operator test-operator already exists")
@@ -69,25 +84,40 @@ func TestGetOperator(t *testing.T) {
 	recordsSC := contract.RecordsSC{}
 	err := error(nil)
 
-	// Case: Key doesn't exist, no error in retrieving the state
-	chaincodeStub.GetStateReturns(nil, nil)
-	_, err = recordsSC.GetOperator(transactionContext, "test-operator")
-	require.EqualError(t, err, "object test-operator does not exist")
-
-	// Case: Key doesn't exist, error in retrieving the state
-	chaincodeStub.GetStateReturns(nil, fmt.Errorf("unable to retrieve asset"))
-	operator, err := recordsSC.GetOperator(transactionContext, "test-operator")
-	require.EqualError(t, err, "failed to read world state. Error: unable to retrieve asset")
-	require.Nil(t, operator)
-
-	// Case: Key exists, no error in retrieving the state
 	operatorExpected := &contract.Operator{}
 	bytes, err := json.Marshal(operatorExpected)
 	require.NoError(t, err)
 	chaincodeStub.GetStateReturns(bytes, nil)
-	operator, err = recordsSC.GetOperator(transactionContext, "test-operator")
+	operator, err := recordsSC.GetOperator(transactionContext, "test-operator")
 	require.NoError(t, err)
 	require.Equal(t, operatorExpected, operator)
+}
+
+func TestGetOperatorCatchStateError(t *testing.T) {
+	chaincodeStub := &mocks.ChaincodeStub{}
+	transactionContext := &mocks.TransactionContext{}
+	transactionContext.GetStubReturns(chaincodeStub)
+
+	recordsSC := contract.RecordsSC{}
+	err := error(nil)
+
+	chaincodeStub.GetStateReturns(nil, fmt.Errorf("unable to retrieve asset"))
+	operator, err := recordsSC.GetOperator(transactionContext, "test-operator")
+	require.EqualError(t, err, "failed to read world state. Error: unable to retrieve asset")
+	require.Nil(t, operator)
+}
+
+func TestGetOperatorCatchEmptyError(t *testing.T) {
+	chaincodeStub := &mocks.ChaincodeStub{}
+	transactionContext := &mocks.TransactionContext{}
+	transactionContext.GetStubReturns(chaincodeStub)
+
+	recordsSC := contract.RecordsSC{}
+	err := error(nil)
+
+	chaincodeStub.GetStateReturns(nil, nil)
+	_, err = recordsSC.GetOperator(transactionContext, "test-operator")
+	require.EqualError(t, err, "object test-operator does not exist")
 }
 
 func TestAddDrone(t *testing.T) {
@@ -184,30 +214,30 @@ func TestRequestPermit(t *testing.T) {
 
 	// Case: Fail on checking KeyExists(operator) (err != nil)
 	chaincodeStub.GetStateReturnsOnCall(0, nil, fmt.Errorf("cannot get client identity"))
-	err = recordsSC.RequestPermit(transactionContext, "test-flight", "test-drone", time.Now(), time.Now(), [][3]float64{}, [][3]uint64{})
+	err = recordsSC.RequestPermit(transactionContext, "test-operator", "test-flight", "test-drone", time.Now(), time.Now(), [][][3]float64{}, [][][3]uint64{}, []bool{})
 	require.EqualError(t, err, "failed to read world state. Error: cannot get client identity")
 
 	// Case: Fail on checking KeyExists(opereator) (!exists)
 	chaincodeStub.GetStateReturnsOnCall(1, nil, nil)
-	err = recordsSC.RequestPermit(transactionContext, "test-flight", "test-drone", time.Now(), time.Now(), [][3]float64{}, [][3]uint64{})
+	err = recordsSC.RequestPermit(transactionContext, "test-operator", "test-flight", "test-drone", time.Now(), time.Now(), [][][3]float64{}, [][][3]uint64{}, []bool{})
 	require.EqualError(t, err, "operator (test-operator) does not exist")
 
 	// Case: Fail to read operator from state
 	chaincodeStub.GetStateReturnsOnCall(2, []byte{}, nil)
 	chaincodeStub.GetStateReturnsOnCall(3, nil, fmt.Errorf("failed to read from state"))
-	err = recordsSC.RequestPermit(transactionContext, "test-flight", "test-drone", time.Now(), time.Now(), [][3]float64{}, [][3]uint64{})
+	err = recordsSC.RequestPermit(transactionContext, "test-operator", "test-flight", "test-drone", time.Now(), time.Now(), [][][3]float64{}, [][][3]uint64{}, []bool{})
 	require.EqualError(t, err, "failed to read from state")
 
 	// Case: Fail to get operator from state (empty)
 	chaincodeStub.GetStateReturnsOnCall(4, []byte{}, nil)
 	chaincodeStub.GetStateReturnsOnCall(5, nil, nil)
-	err = recordsSC.RequestPermit(transactionContext, "test-flight", "test-drone", time.Now(), time.Now(), [][3]float64{}, [][3]uint64{})
+	err = recordsSC.RequestPermit(transactionContext, "test-operator", "test-flight", "test-drone", time.Now(), time.Now(), [][][3]float64{}, [][][3]uint64{}, []bool{})
 	require.EqualError(t, err, "operator test-operator is empty")
 
 	// Case: Fail to get operator from state (corrupt)
 	chaincodeStub.GetStateReturnsOnCall(6, []byte{}, nil)
 	chaincodeStub.GetStateReturnsOnCall(7, []byte{}, nil)
-	err = recordsSC.RequestPermit(transactionContext, "test-flight", "test-drone", time.Now(), time.Now(), [][3]float64{}, [][3]uint64{})
+	err = recordsSC.RequestPermit(transactionContext, "test-operator", "test-flight", "test-drone", time.Now(), time.Now(), [][][3]float64{}, [][][3]uint64{}, []bool{})
 	require.EqualError(t, err, "failed to unmarshal. Error: unexpected end of JSON input")
 
 	// Case: Fail on checking flightId uniqueness
@@ -216,7 +246,7 @@ func TestRequestPermit(t *testing.T) {
 	require.NoError(t, err)
 	chaincodeStub.GetStateReturnsOnCall(8, []byte{}, nil)
 	chaincodeStub.GetStateReturnsOnCall(9, operatorJSON, nil)
-	err = recordsSC.RequestPermit(transactionContext, "test-flight", "test-drone", time.Now(), time.Now(), [][3]float64{}, [][3]uint64{})
+	err = recordsSC.RequestPermit(transactionContext, "test-operator", "test-flight", "test-drone", time.Now(), time.Now(), [][][3]float64{}, [][][3]uint64{}, []bool{})
 	require.EqualError(t, err, "operator already has flight test-flight")
 
 	// Case: Fail on adding flight
@@ -226,7 +256,7 @@ func TestRequestPermit(t *testing.T) {
 	chaincodeStub.GetStateReturnsOnCall(10, []byte{}, nil)
 	chaincodeStub.GetStateReturnsOnCall(11, operatorJSON, nil)
 	chaincodeStub.PutStateReturnsOnCall(0, fmt.Errorf(""))
-	err = recordsSC.RequestPermit(transactionContext, "test-flight", "test-drone", time.Now(), time.Now(), [][3]float64{}, [][3]uint64{})
+	err = recordsSC.RequestPermit(transactionContext, "test-operator", "test-flight", "test-drone", time.Now(), time.Now(), [][][3]float64{}, [][][3]uint64{}, []bool{})
 	require.EqualError(t, err, "failed to write to world state")
 
 	// Case: Success
@@ -236,6 +266,6 @@ func TestRequestPermit(t *testing.T) {
 	chaincodeStub.GetStateReturnsOnCall(12, []byte{}, nil)
 	chaincodeStub.GetStateReturnsOnCall(13, operatorJSON, nil)
 	chaincodeStub.PutStateReturnsOnCall(1, nil)
-	err = recordsSC.RequestPermit(transactionContext, "test-flight", "test-drone", time.Now(), time.Now(), [][3]float64{}, [][3]uint64{})
+	err = recordsSC.RequestPermit(transactionContext, "test-operator", "test-flight", "test-drone", time.Now(), time.Now(), [][][3]float64{}, [][][3]uint64{}, []bool{})
 	require.NoError(t, err)
 }

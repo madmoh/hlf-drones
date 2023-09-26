@@ -201,5 +201,5 @@ func GetInclusions(vertices [][3]float64, facets [][3]uint64, query [][3]float64
 	for i := range distances {
 		inclusions[i] = distances[i] > 0
 	}
-	return inclusions
+	return inclusions // true: inside, false: outside
 }

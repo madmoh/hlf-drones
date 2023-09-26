@@ -119,7 +119,7 @@ func (c *RecordsSC) AddCertificate(ctx contractapi.TransactionContextInterface, 
 	return ctx.GetStub().PutState(operatorId, operatorJSON)
 }
 
-func (c *RecordsSC) RequestPermit(ctx contractapi.TransactionContextInterface, operatorId string, flightId string, droneId string, permitEffective time.Time, permitExpiry time.Time, vertices [][3]float64, facets [][3]uint64) error {
+func (c *RecordsSC) RequestPermit(ctx contractapi.TransactionContextInterface, operatorId string, flightId string, droneId string, permitEffective time.Time, permitExpiry time.Time, vertices [][][3]float64, facets [][][3]uint64, types []bool) error {
 	// operatorId, err := ctx.GetClientIdentity().GetID()
 	// if err != nil {
 	// 	return fmt.Errorf("cannot get client identity. Error: %v", err)
@@ -149,13 +149,14 @@ func (c *RecordsSC) RequestPermit(ctx contractapi.TransactionContextInterface, o
 	}
 	// tree := kdtree.Tree{Root: nil, Count: 0}
 	flight := Flight{
-		FlightId:         flightId,
-		OperatorId:       operatorId,
-		DroneId:          droneId,
-		PermitEffective:  permitEffective,
-		PermitExpiry:     permitExpiry,
-		BoundaryVertices: vertices,
-		BoundaryFacets:   facets,
+		FlightId:           flightId,
+		OperatorId:         operatorId,
+		DroneId:            droneId,
+		PermitEffective:    permitEffective,
+		PermitExpiry:       permitExpiry,
+		BoundariesVertices: vertices,
+		BoundariesFacets:   facets,
+		BoundariesTypes:    types,
 		// Tree:             &tree,
 		Status:  "PENDING",
 		Beacons: make([][3]float64, 0),

@@ -1,14 +1,15 @@
 test:
   name: records-contract-benchmark
   workers:
-    number: 8
+    number: 40
   rounds:
   - label: logBeacons
-    txDuration: 5
+    # txDuration: 30
+    txNumber: 1000
     rateControl:
       type: fixed-rate
       opts:
-        tps: 5
+        tps: 100
     # rateControl:
     #   type: maximum-rate
     #   opts:

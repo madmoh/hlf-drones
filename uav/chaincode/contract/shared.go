@@ -25,13 +25,14 @@ type Drone struct {
 }
 
 type Flight struct {
-	FlightId         string       `json:"FlightId"`
-	OperatorId       string       `json:"OperatorId"`
-	DroneId          string       `json:"DroneId"`
-	PermitEffective  time.Time    `json:"PermitEffective"`
-	PermitExpiry     time.Time    `json:"PermitExpiry"`
-	BoundaryVertices [][3]float64 `json:"BoundaryVertices"` // TODO: Expand to [][][3]
-	BoundaryFacets   [][3]uint64  `json:"BoundaryFacets"`   // TODO: Expand to [][][3]
+	FlightId           string         `json:"FlightId"`
+	OperatorId         string         `json:"OperatorId"`
+	DroneId            string         `json:"DroneId"`
+	PermitEffective    time.Time      `json:"PermitEffective"`
+	PermitExpiry       time.Time      `json:"PermitExpiry"`
+	BoundariesVertices [][][3]float64 `json:"BoundariesVertices"` // TODO: Expand to [][][3]
+	BoundariesFacets   [][][3]uint64  `json:"BoundariesFacets"`   // TODO: Expand to [][][3]
+	BoundariesTypes    []bool         `json:"BoundariesTypes"`    // true: permitted/must be inside, false: restricted/must stay outside
 	// Tree             *kdtree.Tree `json:"Tree"`
 	Status       string       `json:"Status"` // PENDING, REJECTED, APPROVED, ACTIVE
 	Takeoff      time.Time    `json:"Takeoff"`

@@ -127,9 +127,8 @@ func (c *FlightsSC) LogBeacons(ctx contractapi.TransactionContextInterface, oper
 	if flight.Status != "ACTIVE" {
 		return fmt.Errorf("Flight %v status is not ACTIVE", flightId)
 	}
-	// TODO: Find if it's possible to get time based on the invocation time
-	// TODO: Add margin of error
 	// TODO: Enable after testing
+	// TODO: Add margin of error to secondsPassed != len(newBeacons)
 	// var secondsPassed int
 	// if !flight.LastBeaconAt.IsZero() {
 	// 	secondsPassed = int(time.Since(flight.LastBeaconAt).Seconds())
@@ -146,6 +145,10 @@ func (c *FlightsSC) LogBeacons(ctx contractapi.TransactionContextInterface, oper
 		return fmt.Errorf("failed to get timestamp for receipt: %v", err)
 	}
 	flight.LastBeaconAt = txTimestamp.AsTime()
+	// TODO: Specify threshold as a contract-wide parameter
+	if len(flight.Beacons) > 120 {
+		AnalyzeBeacons(ctx, &flight)
+	}
 	flightJSON, err = json.Marshal(flight)
 	if err != nil {
 		return err
@@ -154,68 +157,42 @@ func (c *FlightsSC) LogBeacons(ctx contractapi.TransactionContextInterface, oper
 	if err != nil {
 		return err
 	}
-	// TODO: Specify 1000 as a contract-wide parameter
-	if len(flight.Beacons) > 120 {
-		err = c.AnalyzeBeacons(ctx, flightId)
-	}
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
 // TODO: Function design can be much improved
-func (c *FlightsSC) AnalyzeBeacons(ctx contractapi.TransactionContextInterface, flightId string) error {
-	exists, err := KeyExists(ctx, flightId)
-	if err != nil {
-		return err
+func AnalyzeBeacons(ctx contractapi.TransactionContextInterface, flight *Flight) {
+	boundariesCount := len(flight.BoundariesTypes)
+	inclusions := make([][]bool, boundariesCount)
+	for i := 0; i < boundariesCount; i++ {
+		inclusions[i] = isinside.GetInclusions(flight.BoundariesVertices[i], flight.BoundariesFacets[i], flight.Beacons)
 	}
-	if !exists {
-		return fmt.Errorf("Flight %v does not exist", flightId)
+	beaconsCount := len(flight.Beacons)
+	compliance := make([]int, beaconsCount) // 0 good, -1 entered, 1 escaped
+	for b := 0; b < beaconsCount; b++ {
+		for i := 0; i < boundariesCount; i++ {
+			if flight.BoundariesTypes[i] && !inclusions[i][b] {
+				compliance[b] = 1
+				break
+			} else if !flight.BoundariesTypes[i] && inclusions[i][b] {
+				compliance[b] = -1
+				break
+			}
+		}
 	}
-	flightJSON, err := ctx.GetStub().GetState(flightId)
-	if err != nil {
-		return fmt.Errorf("failed to read from state. Error: %v", err)
-	}
-	if flightJSON == nil {
-		return fmt.Errorf("Flight %v does not exist", flightId)
-	}
-	var flight Flight
-	err = json.Unmarshal(flightJSON, &flight)
-	if err != nil {
-		return err
-	}
-
-	inclusions := isinside.GetInclusions(flight.BoundaryVertices, flight.BoundaryFacets, flight.Beacons)
-	for index, inclusion := range inclusions {
-		if !inclusion {
-
-			// resp := ctx.GetStub().InvokeChaincode(
-			// 	"abyssarCC",
-			// 	[][]byte{
-			// 		[]byte("ViolationsSC:AddViolation"),
-			// 		[]byte(flight.OperatorId),
-			// 		[]byte(flightId),
-			// 		[]byte(strconv.Itoa(index)),
-			// 		[]byte("ESCAPE_PERMITTED_REGION"),
-			// 	},
-			// 	"",
-			// )
-			// if resp.Status != 200 {
-			// 	return fmt.Errorf("error in calling AddViolation. Resp: %v. \n\n%v", resp.Message, resp)
-			// }
+	for i, comply := range compliance {
+		if comply != 0 {
+			reason := ""
+			if comply == 1 {
+				reason = "ESCAPE_PERMITTED"
+			} else if comply == -1 {
+				reason = "ENTER_RESTRICTED"
+			}
 			violationsSC := ViolationsSC{}
-			violationsSC.AddViolation(ctx, flight.OperatorId, flightId, index, "ESCAPE_PERMITTED_REGION")
-			// violationsSC.AddViolation(ctx, flight.OperatorId, flightId, index, "ESCAPE_PERMITTED_REGION")
-			// TODO: Decide report first violation, last violation, all violations?
+			violationsSC.AddViolation(ctx, flight.OperatorId, flight.FlightId, i, reason)
 		}
 	}
 	flight.Beacons = make([][3]float64, 0)
-	flightJSON, err = json.Marshal(flight)
-	if err != nil {
-		return err
-	}
-	return ctx.GetStub().PutState(flightId, flightJSON)
 }
 
 // TODO: Additional business logic checks
