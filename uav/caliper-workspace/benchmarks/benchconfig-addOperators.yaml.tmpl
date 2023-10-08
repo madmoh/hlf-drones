@@ -1,0 +1,15 @@
+test:
+  name: abyssar-benchmark
+  workers:
+    number: $WORKERS
+  rounds:
+  - label: addOperators-$TPS
+    txNumber: $TX_NUMBER
+    rateControl:
+      type: fixed-rate
+      opts:
+        tps: $TPS
+    workload:
+      module: workload/addOperators.js
+      arguments:
+        contractId: abyssarCC # says contractId but it's chaincode name     

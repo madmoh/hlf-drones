@@ -10,6 +10,7 @@ class LogBeaconsWorkload extends WorkloadModuleBase {
 	async initializeWorkloadModule(workerIndex, totalWorkers, roundIndex, roundArguments, sutAdapter, sutContext) {
 		await super.initializeWorkloadModule(workerIndex, totalWorkers, roundIndex, roundArguments, sutAdapter, sutContext);
 		this.I = new Array(this.totalWorkers).fill(0)
+
 		for (let operatorIndex = 0; operatorIndex < this.roundArguments.operatorsPerWorker; operatorIndex++) {
 			const operatorId = `${this.workerIndex}_${operatorIndex}`
 			console.log(`Worker ${this.workerIndex}: Adding operator ${operatorId}`)
@@ -33,16 +34,17 @@ class LogBeaconsWorkload extends WorkloadModuleBase {
 			invokerIdentity: 'User1',
 			contractArguments: [
 				operatorId,
-				flightId, 
-				"", 
-				"2023-09-21T00:00:00Z", 
-				"2023-11-28T00:00:00Z", 
+				flightId,
+				"",
+				"2023-09-21T00:00:00Z",
+				"2023-11-28T00:00:00Z",
 				"[[[-1,0,-1],[-1,0,1],[-1,8,-1],[-1,8,1],[1,0,-1],[1,0,1],[1,8,-1],[1,8,1]]]",
 				"[[[0,6,4],[0,2,6],[0,3,2],[0,1,3],[2,7,6],[2,3,7],[4,6,7],[4,7,5],[0,4,5],[0,5,1],[1,5,7],[1,7,3]]]",
 				"[true]"
 			],
 			readOnly: false
 		}
+		// console.log(`Worker ${this.workerIndex}: Requesting permit ${flightId}`)
 		await this.sutAdapter.sendRequests(requestRequestPermit)
 		this.I[this.workerIndex]++
 	}
@@ -62,17 +64,17 @@ class LogBeaconsWorkload extends WorkloadModuleBase {
 		}
 
 		for (let i = 0; i < this.I[this.workerIndex]; i++) {
-			const operatorId = `${this.workerIndex}_${this.I[this.workerIndex] % this.roundArguments.operatorsPerWorker}`
-			const flightId = `${operatorId}_${this.I[this.workerIndex]}`
+			const operatorId = `${this.workerIndex}_${i % this.roundArguments.operatorsPerWorker}`
+			const flightId = `${operatorId}_${i}`
 			console.log(`Worker ${this.workerIndex}: Deleting flight ${flightId}`)
-				const requestDeleteFlight = {
-					contractId: this.roundArguments.contractId,
-					contractFunction: 'RecordsSC:DeleteFlight',
-					invokerIdentity: 'User1',
-					contractArguments: [flightId],
-					readOnly: false
-				}
-				await this.sutAdapter.sendRequests(requestDeleteFlight)
+			const requestDeleteFlight = {
+				contractId: this.roundArguments.contractId,
+				contractFunction: 'RecordsSC:DeleteFlight',
+				invokerIdentity: 'User1',
+				contractArguments: [flightId],
+				readOnly: false
+			}
+			await this.sutAdapter.sendRequests(requestDeleteFlight)
 		}
 	}
 }

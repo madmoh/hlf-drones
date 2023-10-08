@@ -10,12 +10,10 @@ cd <.../uav/fabric-samples/test-network/>
 export PATH=$PATH:${PWD}/../bin:$PATH
 export FABRIC_CFG_PATH=$PWD/../config/
 
-./network.sh down
-
-./network.sh up createChannel -c abyssar
-
-./network.sh deployCC -c abyssar -ccn abyssarCC -ccl go -ccv 1.0 -ccs 1 -ccp "../../chaincode"
+./network.sh down && ./network.sh up createChannel -c abyssar && ./network.sh deployCC -c abyssar -ccn abyssarCC -ccl go -ccv 1.0 -ccs 1 -ccp "../../chaincode"
 
 cd <.../uav/caliper-workspace/>
 
-bun caliper launch manager --caliper-workspace ./ --caliper-networkconfig networks/networkconfig.yaml --caliper-benchconfig benchmarks/benchconfig-records.yaml --caliper-flow-only-test
+bun caliper launch manager --caliper-workspace ./ --caliper-networkconfig networks/networkconfig.yaml --caliper-benchconfig benchmarks/benchconfig-addOperators.yaml --caliper-flow-only-test
+bun caliper launch manager --caliper-workspace ./ --caliper-networkconfig networks/networkconfig.yaml --caliper-benchconfig benchmarks/benchconfig-requestPermits.yaml --caliper-flow-only-test
+bun caliper launch manager --caliper-workspace ./ --caliper-networkconfig networks/networkconfig.yaml --caliper-benchconfig benchmarks/benchconfig-logBeacons.yaml --caliper-flow-only-test

@@ -1,0 +1,19 @@
+test:
+  name: abyssar-benchmark
+  workers:
+    number: $WORKERS
+  rounds:
+  - label: requestPermits-$TPS
+    txNumber: $TX_NUMBER
+    rateControl:
+      type: fixed-rate
+      opts:
+        tps: $TPS
+    workload:
+      module: workload/requestPermits.js
+      arguments:
+        operatorsPerWorker: 8
+        boundariesPerPermit: 1
+        verticesPerBoundary: 1
+        facetsPerBoundary: 1
+        contractId: abyssarCC # says contractId but it's chaincode name
