@@ -134,7 +134,7 @@
             <ul>
                 <h3>&nbspBenchmark results</h3>
                 <li><a href="#benchmarksummary">Summary</a></li>
-                    <li><a href="#logBeacons-1000">logBeacons-1000</a></li>
+                    <li><a href="#logBeacons-875">logBeacons-875</a></li>
             </ul>
             <ul>
                 <h3>&nbspSystem under test</h3>
@@ -152,28 +152,28 @@
                     </tr>
 
                     <tr>
-                         <td>logBeacons-1000</td> <td>1122</td> <td>8958</td> <td>973.3</td> <td>54.41</td> <td>0.42</td> <td>32.26</td> <td>157.2</td>
+                         <td>logBeacons-875</td> <td>1371</td> <td>7461</td> <td>853.3</td> <td>59.62</td> <td>0.32</td> <td>33.77</td> <td>133.3</td>
                     </tr>
                 </table>
             </div>
-            <div style="border-bottom: 1px solid #d9d9d9; padding-bottom: 10px;" id="logBeacons-1000">
-                <h2>Benchmark round: logBeacons-1000</h2>
+            <div style="border-bottom: 1px solid #d9d9d9; padding-bottom: 10px;" id="logBeacons-875">
+                <h2>Benchmark round: logBeacons-875</h2>
                 <p></p>
                 <pre style="overflow: visible;white-space: pre-wrap;max-height:100%;">rateControl:
   type: fixed-rate
   opts:
-    tps: 1000
+    tps: 875
 </pre>
-                        <h3>Performance metrics for logBeacons-1000</h3>
+                        <h3>Performance metrics for logBeacons-875</h3>
                             <table style="min-width: 100%;">
                                 <tr>
                                      <th>Name</th> <th>Succ</th> <th>Fail</th> <th>Send Rate (TPS)</th> <th>Max Latency (s)</th> <th>Min Latency (s)</th> <th>Avg Latency (s)</th> <th>Throughput (TPS)</th>
                                 </tr>
                                 <tr>
-                                     <td>logBeacons-1000</td> <td>1122</td> <td>8958</td> <td>973.3</td> <td>54.41</td> <td>0.42</td> <td>32.26</td> <td>157.2</td>
+                                     <td>logBeacons-875</td> <td>1371</td> <td>7461</td> <td>853.3</td> <td>59.62</td> <td>0.32</td> <td>33.77</td> <td>133.3</td>
                                 </tr>
                             </table>
-                        <h3>Resource utilization for logBeacons-1000</h3>
+                        <h3>Resource utilization for logBeacons-875</h3>
             </div>
 
             <div style="border-bottom: 1px solid #d9d9d9; padding-bottom: 10px;">
@@ -183,12 +183,12 @@
 workers:
   number: 96
 rounds:
-  - label: logBeacons-1000
-    txNumber: 10080
+  - label: logBeacons-875
+    txNumber: 8832
     rateControl:
       type: fixed-rate
       opts:
-        tps: 1000
+        tps: 875
     workload:
       module: workload&#x2F;logBeacons.js
       arguments:
