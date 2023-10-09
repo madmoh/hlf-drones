@@ -9,12 +9,15 @@ class LogBeaconsWorkload extends WorkloadModuleBase {
 
 	async initializeWorkloadModule(workerIndex, totalWorkers, roundIndex, roundArguments, sutAdapter, sutContext) {
 		await super.initializeWorkloadModule(workerIndex, totalWorkers, roundIndex, roundArguments, sutAdapter, sutContext);
+		this.lastOperator = new Array(this.totalWorkers).fill(0)
+		this.lastFlight = new Array(this.totalWorkers * this.roundArguments.operatorsPerWorker).fill(0)
+
 		// Create operators and flights
-		for (let operatorIndex = 0; operatorIndex < this.roundArguments.operatorsCount; operatorIndex++) {
+		for (let operatorIndex = 0; operatorIndex < this.roundArguments.operatorsPerWorker; operatorIndex++) {
 			const operatorId = `${this.workerIndex}_${operatorIndex}`
 			console.log(`Worker ${this.workerIndex}: Adding operator ${operatorId}`)
 			const requestAddOperator = {
-				contractId: this.roundArguments.contractId,
+				contractId: this.roundArguments.chaincodeName,
 				contractFunction: 'RecordsSC:AddOperator',
 				invokerIdentity: 'User1',
 				contractArguments: [operatorId],
@@ -26,7 +29,7 @@ class LogBeaconsWorkload extends WorkloadModuleBase {
 				const flightId = `${this.workerIndex}_${operatorIndex}_${flightIndex}`
 				console.log(`Worker ${this.workerIndex}: Adding flight ${flightId}`)
 				const requestRequestPermit = {
-					contractId: this.roundArguments.contractId,
+					contractId: this.roundArguments.chaincodeName,
 					contractFunction: 'RecordsSC:RequestPermit',
 					invokerIdentity: 'User1',
 					contractArguments: [
@@ -43,7 +46,7 @@ class LogBeaconsWorkload extends WorkloadModuleBase {
 				}
 				await this.sutAdapter.sendRequests(requestRequestPermit)
 				const requestLogTakeoff = {
-					contractId: this.roundArguments.contractId,
+					contractId: this.roundArguments.chaincodeName,
 					contractFunction: 'FlightsSC:LogTakeoff',
 					invokerIdentity: 'User1',
 					contractArguments: [operatorId, flightId],
@@ -55,12 +58,12 @@ class LogBeaconsWorkload extends WorkloadModuleBase {
 	}
 
 	async submitTransaction() {
-		const operatorIndex = Math.floor(Math.random() * this.roundArguments.operatorsCount)
-		const flightIndex = Math.floor(Math.random() * this.roundArguments.flightsPerOperator)
+		const operatorIndex = this.lastOperator[this.workerIndex]
+		const flightIndex = this.lastFlight[this.workerIndex * this.roundArguments.operatorsPerWorker + operatorIndex]
 		const operatorId = `${this.workerIndex}_${operatorIndex}`
 		const flightId = `${operatorId}_${flightIndex}`
 		const request = {
-			contractId: this.roundArguments.contractId,
+			contractId: this.roundArguments.chaincodeName,
 			contractFunction: 'FlightsSC:LogBeacons',
 			invokerIdentity: 'User1',
 			contractArguments: [
@@ -69,15 +72,18 @@ class LogBeaconsWorkload extends WorkloadModuleBase {
 				"[" + `[${Math.random() * 2 - 1},${Math.random() * 8},${Math.random() * 2 - 1}],`.repeat(this.roundArguments.beaconsPerLog - 1) + `[${Math.random() * 2 - 1},${Math.random() * 8},${Math.random() * 2 - 1}]]`
 			]
 		}
+		this.lastOperator[this.workerIndex] = (this.lastOperator[this.workerIndex] + 1) % this.roundArguments.operatorsPerWorker
+		this.lastFlight[this.workerIndex * this.roundArguments.operatorsPerWorker + operatorIndex] = (this.lastFlight[this.workerIndex * this.roundArguments.operatorsPerWorker + operatorIndex] + 1) % this.roundArguments.flightsPerOperator
+		// console.log(`Worker ${this.workerIndex}: Adding logs for flightId ${flightId}`)
 		await this.sutAdapter.sendRequests(request)
 	}
 
 	async cleanupWorkloadModule() {
-		for (let operatorIndex = 0; operatorIndex < this.roundArguments.operatorsCount; operatorIndex++) {
+		for (let operatorIndex = 0; operatorIndex < this.roundArguments.operatorsPerWorker; operatorIndex++) {
 			const operatorId = `${this.workerIndex}_${operatorIndex}`
 			console.log(`Worker ${this.workerIndex}: Deleting operator ${operatorId}`)
 			const requestDeleteOperator = {
-				contractId: this.roundArguments.contractId,
+				contractId: this.roundArguments.chaincodeName,
 				contractFunction: 'RecordsSC:DeleteOperator',
 				invokerIdentity: 'User1',
 				contractArguments: [operatorId],
@@ -89,7 +95,7 @@ class LogBeaconsWorkload extends WorkloadModuleBase {
 				const flightId = `${this.workerIndex}_${operatorIndex}_${flightIndex}`
 				console.log(`Worker ${this.workerIndex}: Deleting flight ${flightId}`)
 				const requestDeleteFlight = {
-					contractId: this.roundArguments.contractId,
+					contractId: this.roundArguments.chaincodeName,
 					contractFunction: 'RecordsSC:DeleteFlight',
 					invokerIdentity: 'User1',
 					contractArguments: [flightId],

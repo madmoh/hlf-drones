@@ -46,11 +46,3 @@ do
 
 	done
 done
-
-
-
-# cd <.../uav/caliper-workspace/>
-
-# bun caliper launch manager --caliper-workspace ./ --caliper-networkconfig networks/networkconfig.yaml --caliper-benchconfig benchmarks/benchconfig-addOperators.yaml --caliper-flow-only-test
-# bun caliper launch manager --caliper-workspace ./ --caliper-networkconfig networks/networkconfig.yaml --caliper-benchconfig benchmarks/benchconfig-requestPermits.yaml --caliper-flow-only-test
-# bun caliper launch manager --caliper-workspace ./ --caliper-networkconfig networks/networkconfig.yaml --caliper-benchconfig benchmarks/benchconfig-logBeacons.yaml --caliper-flow-only-test

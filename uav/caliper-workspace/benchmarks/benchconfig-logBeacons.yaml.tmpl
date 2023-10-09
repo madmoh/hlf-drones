@@ -1,14 +1,14 @@
 test:
   name: abyssar-benchmark
   workers:
-    number: 96
+    number: $WORKERS
   rounds:
-  - label: logBeacons-400
-    txNumber: 4032
+  - label: logBeacons-$TPS
+    txNumber: $TX_NUMBER
     rateControl:
       type: fixed-rate
       opts:
-        tps: 400
+        tps: $TPS
     workload:
       module: workload/logBeacons.js
       arguments:
