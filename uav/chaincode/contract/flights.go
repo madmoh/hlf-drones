@@ -61,6 +61,11 @@ func (c *FlightsSC) LogTakeoff(ctx contractapi.TransactionContextInterface, oper
 	if err != nil {
 		return err
 	}
+	if flight.Status != "APPROVED" {
+		violationsSC := ViolationsSC{}
+		violationsSC.AddViolation(ctx, flight.OperatorId, flight.FlightId, 0, "TAKEOFF_NOT_APPROVED")
+		return nil
+	}
 
 	flight.Status = "ACTIVE"
 	txTimestamp, err := ctx.GetStub().GetTxTimestamp()
