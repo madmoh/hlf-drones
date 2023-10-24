@@ -1,18 +1,23 @@
-test,requested rate (tps),succ,fail,send rate (tps),max latency (s),min latency (s),avg latency (s),throughput (tps)
+Test,TargetSendRate,Success,Fail,SendRate,MaxLatency,MinLatency,AvgLatency,Throughput
 requestPermits,1000,2022,8058,964.3,0.81,0.32,0.47,947.6
 requestPermits,100,1056,0,105.4,0.58,0.14,0.36,103.8
 requestPermits,125,1344,0,129.7,0.58,0.17,0.37,127.4
 requestPermits,150,1536,0,153.4,0.58,0.15,0.37,151.1
 requestPermits,175,1735,89,178.9,0.59,0.23,0.40,174.8
+requestPermits,2000,1085,18979,1194.2,8.55,0.23,2.51,1178.6
 requestPermits,200,1785,231,202.6,0.59,0.06,0.31,196.5
 requestPermits,225,1920,384,226.2,0.58,0.07,0.30,224.6
+requestPermits,2500,1105,23951,1295.2,15.75,0.27,2.71,1276.7
 requestPermits,250,1967,625,250.5,0.57,0.12,0.32,243.3
 requestPermits,25,288,0,35.6,0.57,0.15,0.37,35.0
 requestPermits,275,1922,862,273.9,0.57,0.14,0.33,261.9
+requestPermits,3000,1200,28848,1307.8,17.43,0.20,2.86,1288.6
 requestPermits,300,1963,1109,297.6,0.57,0.16,0.35,288.9
 requestPermits,325,1920,1344,322.1,0.58,0.19,0.36,307.2
+requestPermits,3500,1668,33372,1288.7,11.46,0.25,2.61,1264.2
 requestPermits,350,1946,1606,346.4,0.60,0.21,0.37,333.9
 requestPermits,375,1968,1872,369.3,0.60,0.18,0.38,360.8
+requestPermits,4000,1873,38159,1294.6,12.21,0.23,2.86,1261.0
 requestPermits,400,1931,2101,395.3,0.61,0.25,0.39,379.1
 requestPermits,425,1972,2348,417.0,0.59,0.16,0.39,405.5
 requestPermits,450,1943,2569,441.5,0.60,0.19,0.40,424.7

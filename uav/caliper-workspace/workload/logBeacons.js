@@ -78,33 +78,33 @@ class LogBeaconsWorkload extends WorkloadModuleBase {
 		await this.sutAdapter.sendRequests(request)
 	}
 
-	async cleanupWorkloadModule() {
-		for (let operatorIndex = 0; operatorIndex < this.roundArguments.operatorsPerWorker; operatorIndex++) {
-			const operatorId = `${this.workerIndex}_${operatorIndex}`
-			console.log(`Worker ${this.workerIndex}: Deleting operator ${operatorId}`)
-			const requestDeleteOperator = {
-				contractId: this.roundArguments.chaincodeName,
-				contractFunction: 'RecordsSC:DeleteOperator',
-				invokerIdentity: 'User1',
-				contractArguments: [operatorId],
-				readOnly: false
-			}
-			await this.sutAdapter.sendRequests(requestDeleteOperator)
+	// async cleanupWorkloadModule() {
+	// 	for (let operatorIndex = 0; operatorIndex < this.roundArguments.operatorsPerWorker; operatorIndex++) {
+	// 		const operatorId = `${this.workerIndex}_${operatorIndex}`
+	// 		console.log(`Worker ${this.workerIndex}: Deleting operator ${operatorId}`)
+	// 		const requestDeleteOperator = {
+	// 			contractId: this.roundArguments.chaincodeName,
+	// 			contractFunction: 'RecordsSC:DeleteOperator',
+	// 			invokerIdentity: 'User1',
+	// 			contractArguments: [operatorId],
+	// 			readOnly: false
+	// 		}
+	// 		await this.sutAdapter.sendRequests(requestDeleteOperator)
 
-			for (let flightIndex = 0; flightIndex < this.roundArguments.flightsPerOperator; flightIndex++) {
-				const flightId = `${this.workerIndex}_${operatorIndex}_${flightIndex}`
-				console.log(`Worker ${this.workerIndex}: Deleting flight ${flightId}`)
-				const requestDeleteFlight = {
-					contractId: this.roundArguments.chaincodeName,
-					contractFunction: 'RecordsSC:DeleteFlight',
-					invokerIdentity: 'User1',
-					contractArguments: [flightId],
-					readOnly: false
-				}
-				await this.sutAdapter.sendRequests(requestDeleteFlight)
-			}
-		}
-	}
+	// 		for (let flightIndex = 0; flightIndex < this.roundArguments.flightsPerOperator; flightIndex++) {
+	// 			const flightId = `${this.workerIndex}_${operatorIndex}_${flightIndex}`
+	// 			console.log(`Worker ${this.workerIndex}: Deleting flight ${flightId}`)
+	// 			const requestDeleteFlight = {
+	// 				contractId: this.roundArguments.chaincodeName,
+	// 				contractFunction: 'RecordsSC:DeleteFlight',
+	// 				invokerIdentity: 'User1',
+	// 				contractArguments: [flightId],
+	// 				readOnly: false
+	// 			}
+	// 			await this.sutAdapter.sendRequests(requestDeleteFlight)
+	// 		}
+	// 	}
+	// }
 }
 
 function createWorkloadModule() {

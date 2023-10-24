@@ -16,7 +16,7 @@ finalrun=$3
 output="caliper-workspace/reports/$test-rs$startrun-rf$finalrun.csv"
 
 touch $output
-echo "test,requested rate (tps),succ,fail,send rate (tps),max latency (s),min latency (s),avg latency (s),throughput (tps)" > $output
+echo "Test,TargetSendRate,Success,Fail,SendRate,MaxLatency,MinLatency,AvgLatency,Throughput" > $output
 
 for run in $(seq $startrun $finalrun)
 do

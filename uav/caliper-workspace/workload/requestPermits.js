@@ -49,34 +49,34 @@ class LogBeaconsWorkload extends WorkloadModuleBase {
 		this.I[this.workerIndex]++
 	}
 
-	async cleanupWorkloadModule() {
-		for (let operatorIndex = 0; operatorIndex < this.roundArguments.operatorsPerWorker; operatorIndex++) {
-			const operatorId = `${this.workerIndex}_${operatorIndex}`
-			console.log(`Worker ${this.workerIndex}: Deleting operator ${operatorId}`)
-			const requestDeleteOperator = {
-				contractId: this.roundArguments.contractId,
-				contractFunction: 'RecordsSC:DeleteOperator',
-				invokerIdentity: 'User1',
-				contractArguments: [operatorId],
-				readOnly: false
-			}
-			await this.sutAdapter.sendRequests(requestDeleteOperator)
-		}
+	// async cleanupWorkloadModule() {
+	// 	for (let operatorIndex = 0; operatorIndex < this.roundArguments.operatorsPerWorker; operatorIndex++) {
+	// 		const operatorId = `${this.workerIndex}_${operatorIndex}`
+	// 		console.log(`Worker ${this.workerIndex}: Deleting operator ${operatorId}`)
+	// 		const requestDeleteOperator = {
+	// 			contractId: this.roundArguments.contractId,
+	// 			contractFunction: 'RecordsSC:DeleteOperator',
+	// 			invokerIdentity: 'User1',
+	// 			contractArguments: [operatorId],
+	// 			readOnly: false
+	// 		}
+	// 		await this.sutAdapter.sendRequests(requestDeleteOperator)
+	// 	}
 
-		for (let i = 0; i < this.I[this.workerIndex]; i++) {
-			const operatorId = `${this.workerIndex}_${i % this.roundArguments.operatorsPerWorker}`
-			const flightId = `${operatorId}_${i}`
-			console.log(`Worker ${this.workerIndex}: Deleting flight ${flightId}`)
-			const requestDeleteFlight = {
-				contractId: this.roundArguments.contractId,
-				contractFunction: 'RecordsSC:DeleteFlight',
-				invokerIdentity: 'User1',
-				contractArguments: [flightId],
-				readOnly: false
-			}
-			await this.sutAdapter.sendRequests(requestDeleteFlight)
-		}
-	}
+	// 	for (let i = 0; i < this.I[this.workerIndex]; i++) {
+	// 		const operatorId = `${this.workerIndex}_${i % this.roundArguments.operatorsPerWorker}`
+	// 		const flightId = `${operatorId}_${i}`
+	// 		console.log(`Worker ${this.workerIndex}: Deleting flight ${flightId}`)
+	// 		const requestDeleteFlight = {
+	// 			contractId: this.roundArguments.contractId,
+	// 			contractFunction: 'RecordsSC:DeleteFlight',
+	// 			invokerIdentity: 'User1',
+	// 			contractArguments: [flightId],
+	// 			readOnly: false
+	// 		}
+	// 		await this.sutAdapter.sendRequests(requestDeleteFlight)
+	// 	}
+	// }
 }
 
 function createWorkloadModule() {
