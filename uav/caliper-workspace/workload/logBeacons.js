@@ -15,7 +15,7 @@ class LogBeaconsWorkload extends WorkloadModuleBase {
 		// Create operators and flights
 		for (let operatorIndex = 0; operatorIndex < this.roundArguments.operatorsPerWorker; operatorIndex++) {
 			const operatorId = `${this.workerIndex}_${operatorIndex}`
-			console.log(`Worker ${this.workerIndex}: Adding operator ${operatorId}`)
+			// console.log(`Worker ${this.workerIndex}: Adding operator ${operatorId}`)
 			const requestAddOperator = {
 				contractId: this.roundArguments.chaincodeName,
 				contractFunction: 'RecordsSC:AddOperator',
@@ -27,7 +27,7 @@ class LogBeaconsWorkload extends WorkloadModuleBase {
 
 			for (let flightIndex = 0; flightIndex < this.roundArguments.flightsPerOperator; flightIndex++) {
 				const flightId = `${this.workerIndex}_${operatorIndex}_${flightIndex}`
-				console.log(`Worker ${this.workerIndex}: Adding flight ${flightId}`)
+				// console.log(`Worker ${this.workerIndex}: Adding flight ${flightId}`)
 				const requestRequestPermit = {
 					contractId: this.roundArguments.chaincodeName,
 					contractFunction: 'RecordsSC:RequestPermit',
@@ -45,6 +45,14 @@ class LogBeaconsWorkload extends WorkloadModuleBase {
 					readOnly: false
 				}
 				await this.sutAdapter.sendRequests(requestRequestPermit)
+				const requestEvaluatePermit = {
+					contractId: this.roundArguments.chaincodeName,
+					contractFunction: 'RecordsSC:EvaluatePermit',
+					invokerIdentity: 'User1',
+					contractArguments: [flightId, "APPROVED"],
+					readOnly: false
+				}
+				await this.sutAdapter.sendRequests(requestEvaluatePermit)
 				const requestLogTakeoff = {
 					contractId: this.roundArguments.chaincodeName,
 					contractFunction: 'FlightsSC:LogTakeoff',

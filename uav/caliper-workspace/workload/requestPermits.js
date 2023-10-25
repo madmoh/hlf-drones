@@ -13,7 +13,7 @@ class LogBeaconsWorkload extends WorkloadModuleBase {
 
 		for (let operatorIndex = 0; operatorIndex < this.roundArguments.operatorsPerWorker; operatorIndex++) {
 			const operatorId = `${this.workerIndex}_${operatorIndex}`
-			console.log(`Worker ${this.workerIndex}: Adding operator ${operatorId}`)
+			// console.log(`Worker ${this.workerIndex}: Adding operator ${operatorId}`)
 			const requestAddOperator = {
 				contractId: this.roundArguments.contractId,
 				contractFunction: 'RecordsSC:AddOperator',

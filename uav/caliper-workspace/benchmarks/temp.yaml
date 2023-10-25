@@ -3,17 +3,17 @@ test:
   workers:
     number: 96
   rounds:
-  - label: requestPermits-3000
-    txNumber: 30048
+  - label: logBeacons-2
+    txNumber: 96
     rateControl:
       type: fixed-rate
       opts:
-        tps: 3000
+        tps: 2
     workload:
-      module: workload/requestPermits.js
+      module: workload/logBeacons.js
       arguments:
         operatorsPerWorker: 8
-        boundariesPerPermit: 1
-        verticesPerBoundary: 1
-        facetsPerBoundary: 1
-        contractId: abyssarCC # says contractId but it's chaincode name
+        flightsPerOperator: 1
+        beaconsPerLog: 120
+        violationRate: 0.005
+        chaincodeName: abyssarCC

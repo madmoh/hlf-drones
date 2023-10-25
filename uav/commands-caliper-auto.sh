@@ -42,7 +42,7 @@ do
 			--caliper-benchconfig benchmarks/temp.yaml \
 			--caliper-flow-only-test \
 			--caliper-report-path reports/${test}-${tps}-${run}.html \
-			--caliper-report-precision 6
+			--caliper-report-precision 6 
 
 	done
 done
