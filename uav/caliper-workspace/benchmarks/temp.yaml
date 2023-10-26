@@ -3,17 +3,13 @@ test:
   workers:
     number: 96
   rounds:
-  - label: logBeacons-3000
+  - label: addOperators-3000
     txNumber: 30048
     rateControl:
       type: fixed-rate
       opts:
         tps: 3000
     workload:
-      module: workload/logBeacons.js
+      module: workload/addOperators.js
       arguments:
-        operatorsPerWorker: 8
-        flightsPerOperator: 1
-        beaconsPerLog: 120
-        violationRate: 0.005
-        chaincodeName: abyssarCC
+        contractId: abyssarCC # says contractId but it's chaincode name     
