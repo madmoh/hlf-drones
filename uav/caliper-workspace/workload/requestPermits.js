@@ -2,7 +2,7 @@
 
 const { WorkloadModuleBase } = require('@hyperledger/caliper-core');
 
-class LogBeaconsWorkload extends WorkloadModuleBase {
+class RequestPermitsWorkload extends WorkloadModuleBase {
 	constructor() {
 		super();
 	}
@@ -80,7 +80,7 @@ class LogBeaconsWorkload extends WorkloadModuleBase {
 }
 
 function createWorkloadModule() {
-	return new LogBeaconsWorkload();
+	return new RequestPermitsWorkload();
 }
 
 module.exports.createWorkloadModule = createWorkloadModule;
