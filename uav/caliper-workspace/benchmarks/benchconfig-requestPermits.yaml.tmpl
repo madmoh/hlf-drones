@@ -4,7 +4,7 @@ test:
     number: $WORKERS
   rounds:
   - label: requestPermits-$TPS
-    txNumber: $TX_NUMBER
+    txDuration: $TX_DURATION
     rateControl:
       type: fixed-rate
       opts:

@@ -31,7 +31,8 @@ do
 
 		export WORKERS=$(($(nproc) * 4))
 		export TPS=$tps
-		export TX_NUMBER=$(( ($TPS * 10 + $WORKERS - 1) / $WORKERS * $WORKERS ))
+		# export TX_NUMBER=$(( ($TPS * 10 + $WORKERS - 1) / $WORKERS * $WORKERS ))
+		export TX_DURATION=30
 
 		envsubst < caliper-workspace/benchmarks/benchconfig-${test}.yaml.tmpl > caliper-workspace/benchmarks/temp.yaml
 

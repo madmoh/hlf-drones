@@ -4,7 +4,7 @@ test:
     number: 96
   rounds:
   - label: addOperators-3000
-    txNumber: 30048
+    txDuration: 30
     rateControl:
       type: fixed-rate
       opts:
