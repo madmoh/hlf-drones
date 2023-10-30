@@ -1,0 +1,2 @@
+TargetSendRate,meanSucc,stdSucc,meanFail,stdFail,meanSendRate,stdSendRate,meanMaxLatency,stdMaxLatency,meanMinLatency,stdMinLatency,meanAvgLatency,stdAvgLatency,meanThroughput,stdThroughput
+2800.0,1760.0,,43165.0,,1375.9,,15.14,,0.27,,3.31,,1348.9,
