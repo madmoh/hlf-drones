@@ -3,13 +3,17 @@ test:
   workers:
     number: 96
   rounds:
-  - label: addOperators-3000
+  - label: requestPermits-3000
     txDuration: 30
     rateControl:
       type: fixed-rate
       opts:
         tps: 3000
     workload:
-      module: workload/addOperators.js
+      module: workload/requestPermits.js
       arguments:
-        contractId: abyssarCC # says contractId but it's chaincode name     
+        operatorsPerWorker: 8
+        boundariesPerPermit: 1
+        verticesPerBoundary: 1
+        facetsPerBoundary: 1
+        contractId: abyssarCC # says contractId but it's chaincode name

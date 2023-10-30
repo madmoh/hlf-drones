@@ -2,8 +2,8 @@
 import pandas
 import scipy
 
-reports_root = r"/home/mad/Developer/hlf-tuts/uav/caliper-workspace/reports"
-outputs_root = r"/home/mad/Developer/hlf-tuts/uav/caliper-workspace/reports-csv"
+reports_root = r"~/Developer/hlf-tuts/uav/caliper-workspace/reports"
+outputs_root = r"~/Developer/hlf-tuts/uav/caliper-workspace/reports-csv"
 test_names = ["addOperators", "requestPermits", "logBeacons"]
 tps_range = range(200, 3001, 200)
 run_range = range(31, 36, 1)
@@ -45,9 +45,9 @@ for test_name in test_names:
 
 	# groups = test_data.groupby(["Name"], axis=0, as_index=False)
 	# inliers = groups.transform(scipy.stats.zscore).abs() < 3
-	test_data = test_data.groupby(["Name"], axis=0, as_index=False).aggregate(operations)
-	test_data.index.name = column_names[0]
-	test_data.columns = column_names[1:]
+	test_data = test_data.groupby(["Name"], as_index=False).aggregate(operations)
+	# test_data.index.name = column_names[0]
+	test_data.columns = column_names
 
-	test_data.to_csv(f"{outputs_root}/{test_name}-tps-{tps_range[0]}-{tps_range[-1]}-run-{run_range[0]}-{run_range[-1]}.csv")
+	test_data.to_csv(f"{outputs_root}/{test_name}-tps-{tps_range[0]}-{tps_range[-1]}-run-{run_range[0]}-{run_range[-1]}.csv", index=False)
 
