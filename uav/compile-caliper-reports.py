@@ -5,8 +5,9 @@ import scipy
 reports_root = r"~/Developer/hlf-tuts/uav/caliper-workspace/reports"
 outputs_root = r"~/Developer/hlf-tuts/uav/caliper-workspace/reports-csv"
 test_names = ["addOperators", "requestPermits", "logBeacons"]
-tps_range = range(200, 3001, 200)
-run_range = range(31, 36, 1)
+# tps_range = range(200, 3001, 200)
+tps_range = [2 ** x for x in range(0, 15, 1)]
+run_range = range(51, 61, 1)
 columns = ["TargetSendRate", "Succ", "Fail", "SendRate", "MaxLatency", "MinLatency", "AvgLatency", "Throughput"]
 operations = ["mean", "std"]
 column_names = [op + col for col in columns[1:] for op in operations]
