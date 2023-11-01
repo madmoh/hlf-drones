@@ -8,7 +8,7 @@ test_names = ["addOperators", "requestPermits", "logBeacons"]
 # tps_range = range(200, 3001, 200)
 tps_range = [2 ** x for x in range(0, 15, 1)]
 run_range = range(51, 61, 1)
-columns = ["TargetSendRate", "Succ", "Fail", "SendRate", "MaxLatency", "MinLatency", "AvgLatency", "Throughput"]
+columns = ["TargetSendRate", "Succ", "Fail", "SendRate", "MaxLatency", "MinLatency", "AvgLatency", "Throughput", "DropRatio"]
 operations = ["mean", "std"]
 column_names = [op + col for col in columns[1:] for op in operations]
 column_names = [columns[0]] + column_names
@@ -37,6 +37,7 @@ for test_name in test_names:
 			# with open(report_path) as report_file:
 			try:
 				row = pandas.read_html(report_path)[0]
+				row["DropRatio"] = row["Fail"] / (row["Succ"] + row["Fail"])
 				test_data = pandas.concat([test_data, row])
 			except ValueError:
 				continue
