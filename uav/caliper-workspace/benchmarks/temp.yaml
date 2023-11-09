@@ -3,12 +3,12 @@ test:
   workers:
     number: 96
   rounds:
-  - label: logBeacons-16384
+  - label: logBeacons-477.713
     txDuration: 30
     rateControl:
       type: fixed-rate
       opts:
-        tps: 16384
+        tps: 477.713
     workload:
       module: workload/logBeacons.js
       arguments:

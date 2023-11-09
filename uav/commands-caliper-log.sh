@@ -29,7 +29,8 @@ do
 	do
 		for lg_tps in $(seq $start $step $final)
 		do
-			tps=$((2 ** $lg_tps))
+			# tps=$((2 ** $lg_tps))
+			tps=$(awk "BEGIN {print 2**$lg_tps}")
 			export WORKERS=$(($(nproc) * 4))
 			export TPS=$tps
 			# export TX_NUMBER=$(( ($TPS * 10 + $WORKERS - 1) / $WORKERS * $WORKERS ))

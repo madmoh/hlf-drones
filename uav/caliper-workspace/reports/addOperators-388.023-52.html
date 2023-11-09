@@ -134,7 +134,7 @@
             <ul>
                 <h3>&nbspBenchmark results</h3>
                 <li><a href="#benchmarksummary">Summary</a></li>
-                    <li><a href="#logBeacons-256">logBeacons-256</a></li>
+                    <li><a href="#addOperators-388.023">addOperators-388.023</a></li>
             </ul>
             <ul>
                 <h3>&nbspSystem under test</h3>
@@ -152,29 +152,29 @@
                     </tr>
 
                     <tr>
-                         <td>logBeacons-256</td> <td>1667</td> <td>6109</td> <td>256.7</td> <td>59.13</td> <td>0.15</td> <td>26.40</td> <td>120.0</td>
+                         <td>addOperators-388.023</td> <td>11808</td> <td>0</td> <td>385.4</td> <td>0.80</td> <td>0.08</td> <td>0.35</td> <td>382.1</td>
                     </tr>
                 </table>
             </div>
-            <div style="border-bottom: 1px solid #d9d9d9; padding-bottom: 10px;" id="logBeacons-256">
-                <h2>Benchmark round: logBeacons-256</h2>
+            <div style="border-bottom: 1px solid #d9d9d9; padding-bottom: 10px;" id="addOperators-388.023">
+                <h2>Benchmark round: addOperators-388.023</h2>
                 <p></p>
                 <pre style="overflow: visible;white-space: pre-wrap;max-height:100%;">txDuration: 30
 rateControl:
   type: fixed-rate
   opts:
-    tps: 256
+    tps: 388.023
 </pre>
-                        <h3>Performance metrics for logBeacons-256</h3>
+                        <h3>Performance metrics for addOperators-388.023</h3>
                             <table style="min-width: 100%;">
                                 <tr>
                                      <th>Name</th> <th>Succ</th> <th>Fail</th> <th>Send Rate (TPS)</th> <th>Max Latency (s)</th> <th>Min Latency (s)</th> <th>Avg Latency (s)</th> <th>Throughput (TPS)</th>
                                 </tr>
                                 <tr>
-                                     <td>logBeacons-256</td> <td>1667</td> <td>6109</td> <td>256.7</td> <td>59.13</td> <td>0.15</td> <td>26.40</td> <td>120.0</td>
+                                     <td>addOperators-388.023</td> <td>11808</td> <td>0</td> <td>385.4</td> <td>0.80</td> <td>0.08</td> <td>0.35</td> <td>382.1</td>
                                 </tr>
                             </table>
-                        <h3>Resource utilization for logBeacons-256</h3>
+                        <h3>Resource utilization for addOperators-388.023</h3>
             </div>
 
             <div style="border-bottom: 1px solid #d9d9d9; padding-bottom: 10px;">
@@ -184,20 +184,16 @@ rateControl:
 workers:
   number: 96
 rounds:
-  - label: logBeacons-256
+  - label: addOperators-388.023
     txDuration: 30
     rateControl:
       type: fixed-rate
       opts:
-        tps: 256
+        tps: 388.023
     workload:
-      module: workload&#x2F;logBeacons.js
+      module: workload&#x2F;addOperators.js
       arguments:
-        operatorsPerWorker: 8
-        flightsPerOperator: 1
-        beaconsPerLog: 120
-        violationRate: 0.005
-        chaincodeName: abyssarCC
+        contractId: abyssarCC
 </pre>
                 <h3>SUT</h3>
                 <pre id="sutdetails">not provided</pre>

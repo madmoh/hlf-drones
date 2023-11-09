@@ -134,7 +134,7 @@
             <ul>
                 <h3>&nbspBenchmark results</h3>
                 <li><a href="#benchmarksummary">Summary</a></li>
-                    <li><a href="#logBeacons-256">logBeacons-256</a></li>
+                    <li><a href="#requestPermits-315.173">requestPermits-315.173</a></li>
             </ul>
             <ul>
                 <h3>&nbspSystem under test</h3>
@@ -152,29 +152,29 @@
                     </tr>
 
                     <tr>
-                         <td>logBeacons-256</td> <td>1667</td> <td>6109</td> <td>256.7</td> <td>59.13</td> <td>0.15</td> <td>26.40</td> <td>120.0</td>
+                         <td>requestPermits-315.173</td> <td>5769</td> <td>3831</td> <td>314.9</td> <td>0.61</td> <td>0.16</td> <td>0.36</td> <td>311.5</td>
                     </tr>
                 </table>
             </div>
-            <div style="border-bottom: 1px solid #d9d9d9; padding-bottom: 10px;" id="logBeacons-256">
-                <h2>Benchmark round: logBeacons-256</h2>
+            <div style="border-bottom: 1px solid #d9d9d9; padding-bottom: 10px;" id="requestPermits-315.173">
+                <h2>Benchmark round: requestPermits-315.173</h2>
                 <p></p>
                 <pre style="overflow: visible;white-space: pre-wrap;max-height:100%;">txDuration: 30
 rateControl:
   type: fixed-rate
   opts:
-    tps: 256
+    tps: 315.173
 </pre>
-                        <h3>Performance metrics for logBeacons-256</h3>
+                        <h3>Performance metrics for requestPermits-315.173</h3>
                             <table style="min-width: 100%;">
                                 <tr>
                                      <th>Name</th> <th>Succ</th> <th>Fail</th> <th>Send Rate (TPS)</th> <th>Max Latency (s)</th> <th>Min Latency (s)</th> <th>Avg Latency (s)</th> <th>Throughput (TPS)</th>
                                 </tr>
                                 <tr>
-                                     <td>logBeacons-256</td> <td>1667</td> <td>6109</td> <td>256.7</td> <td>59.13</td> <td>0.15</td> <td>26.40</td> <td>120.0</td>
+                                     <td>requestPermits-315.173</td> <td>5769</td> <td>3831</td> <td>314.9</td> <td>0.61</td> <td>0.16</td> <td>0.36</td> <td>311.5</td>
                                 </tr>
                             </table>
-                        <h3>Resource utilization for logBeacons-256</h3>
+                        <h3>Resource utilization for requestPermits-315.173</h3>
             </div>
 
             <div style="border-bottom: 1px solid #d9d9d9; padding-bottom: 10px;">
@@ -184,20 +184,20 @@ rateControl:
 workers:
   number: 96
 rounds:
-  - label: logBeacons-256
+  - label: requestPermits-315.173
     txDuration: 30
     rateControl:
       type: fixed-rate
       opts:
-        tps: 256
+        tps: 315.173
     workload:
-      module: workload&#x2F;logBeacons.js
+      module: workload&#x2F;requestPermits.js
       arguments:
         operatorsPerWorker: 8
-        flightsPerOperator: 1
-        beaconsPerLog: 120
-        violationRate: 0.005
-        chaincodeName: abyssarCC
+        boundariesPerPermit: 1
+        verticesPerBoundary: 1
+        facetsPerBoundary: 1
+        contractId: abyssarCC
 </pre>
                 <h3>SUT</h3>
                 <pre id="sutdetails">not provided</pre>
