@@ -4,10 +4,11 @@ import scipy
 
 reports_root = r"~/Developer/hlf-tuts/uav/caliper-workspace/reports"
 outputs_root = r"~/Developer/hlf-tuts/uav/caliper-workspace/reports-csv"
-test_names = ["addOperators", "requestPermits", "logBeacons"]
-# tps_range = range(200, 3001, 200)
-tps_range = [2 ** x for x in range(0, 7, 1)] + [73.5167, 90.5097, 111.43, 128, 137.187, 168.897, 207.937, 256, 315.173, 388.023, 477.713] + [2 ** x for x in range(9, 15, 1)]
-run_range = range(51, 61, 1)
+test_names = ["addOperators", "requestPermits"]#, "logBeacons"]
+tps_range = range(20, 601, 20)
+# tps_range = [2 ** x for x in range(0, 7, 1)] + [73.5167, 90.5097, 111.43, 128, 137.187, 168.897, 207.937, 256, 315.173, 388.023, 477.713] + [2 ** x for x in range(9, 15, 1)]
+# tps_range = [2 ** x for x in range(0, 15, 1)]
+run_range = range(1, 4, 1)
 columns = ["TargetSendRate", "Succ", "Fail", "SendRate", "MaxLatency", "MinLatency", "AvgLatency", "Throughput", "DropRatio"]
 operations = ["mean", "std"]
 column_names = [op + col for col in columns[1:] for op in operations]

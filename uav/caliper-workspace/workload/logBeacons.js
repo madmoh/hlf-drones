@@ -27,7 +27,7 @@ class LogBeaconsWorkload extends WorkloadModuleBase {
 
 			for (let flightIndex = 0; flightIndex < this.roundArguments.flightsPerOperator; flightIndex++) {
 				const flightId = `${this.workerIndex}_${operatorIndex}_${flightIndex}`
-				// console.log(`Worker ${this.workerIndex}: Adding flight ${flightId}`)
+				console.log(`Worker ${this.workerIndex}: Adding flight ${flightId}`)
 				const requestRequestPermit = {
 					contractId: this.roundArguments.chaincodeName,
 					contractFunction: 'RecordsSC:RequestPermit',
@@ -36,8 +36,8 @@ class LogBeaconsWorkload extends WorkloadModuleBase {
 						operatorId,
 						flightId, 
 						"", 
-						"2023-09-21T00:00:00Z", 
-						"2023-11-28T00:00:00Z", 
+						"2024-01-01T00:00:00Z", 
+						"2025-01-01T00:00:00Z", 
 						"[[[-1,0,-1],[-1,0,1],[-1,8,-1],[-1,8,1],[1,0,-1],[1,0,1],[1,8,-1],[1,8,1]]]",
 						"[[[0,6,4],[0,2,6],[0,3,2],[0,1,3],[2,7,6],[2,3,7],[4,6,7],[4,7,5],[0,4,5],[0,5,1],[1,5,7],[1,7,3]]]",
 						"[true]"
@@ -82,7 +82,7 @@ class LogBeaconsWorkload extends WorkloadModuleBase {
 		}
 		this.lastOperator[this.workerIndex] = (this.lastOperator[this.workerIndex] + 1) % this.roundArguments.operatorsPerWorker
 		this.lastFlight[this.workerIndex * this.roundArguments.operatorsPerWorker + operatorIndex] = (this.lastFlight[this.workerIndex * this.roundArguments.operatorsPerWorker + operatorIndex] + 1) % this.roundArguments.flightsPerOperator
-		// console.log(`Worker ${this.workerIndex}: Adding logs for flightId ${flightId}`)
+		console.log(`Worker ${this.workerIndex}: Adding ${this.roundArguments.beaconsPerLog} logs for flightId ${flightId}`)
 		await this.sutAdapter.sendRequests(request)
 	}
 

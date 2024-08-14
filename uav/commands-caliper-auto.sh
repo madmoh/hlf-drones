@@ -25,14 +25,20 @@ do
 	for tps in $(seq $start $step $final)
 	do
 		echo "$tps"
-		fabric-samples/test-network/network.sh down &&
-		fabric-samples/test-network/network.sh up createChannel -c abyssar &&
-		fabric-samples/test-network/network.sh deployCC -c abyssar -ccn abyssarCC -ccl go -ccv 1.0 -ccs 1 -ccp "../../chaincode"
-
 		export WORKERS=$(($(nproc) * 4))
 		export TPS=$tps
-		# export TX_NUMBER=$(( ($TPS * 10 + $WORKERS - 1) / $WORKERS * $WORKERS ))
-		export TX_DURATION=30
+		export TX_DURATION=60
+		if [ $test = "requestPermits" ]; then
+		  export OPERATORS_PER_WORKER=$(($TPS*15/$WORKERS+1))
+		fi
+		if [ $test = "logBeacons" ]; then
+		  export OPERATORS_PER_WORKER=$(($TPS*120/$WORKERS+1))
+		fi
+
+		fabric-samples/test-network/network.sh down &&
+		fabric-samples/test-network/network.sh up createChannel -c abyssar &&
+		# (cd fabric-samples/test-network/addOrg3 ; ./addOrg3.sh up -c abyssar) &&
+		fabric-samples/test-network/network.sh deployCC -c abyssar -ccn abyssarCC -ccl go -ccv 1.0 -ccs 1 -ccp "../../chaincode"
 
 		envsubst < caliper-workspace/benchmarks/benchconfig-${test}.yaml.tmpl > caliper-workspace/benchmarks/temp.yaml
 

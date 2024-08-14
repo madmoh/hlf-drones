@@ -152,14 +152,15 @@
                     </tr>
 
                     <tr>
-                         <td>logBeacons-140</td> <td>1320</td> <td>120</td> <td>144.9</td> <td>7.69</td> <td>0.28</td> <td>2.48</td> <td>91.8</td>
+                         <td>logBeacons-140</td> <td>1536</td> <td>0</td> <td>145.6</td> <td>2.20</td> <td>0.09</td> <td>0.30</td> <td>120.9</td>
                     </tr>
                 </table>
             </div>
             <div style="border-bottom: 1px solid #d9d9d9; padding-bottom: 10px;" id="logBeacons-140">
                 <h2>Benchmark round: logBeacons-140</h2>
                 <p></p>
-                <pre style="overflow: visible;white-space: pre-wrap;max-height:100%;">rateControl:
+                <pre style="overflow: visible;white-space: pre-wrap;max-height:100%;">txDuration: 10
+rateControl:
   type: fixed-rate
   opts:
     tps: 140
@@ -170,7 +171,7 @@
                                      <th>Name</th> <th>Succ</th> <th>Fail</th> <th>Send Rate (TPS)</th> <th>Max Latency (s)</th> <th>Min Latency (s)</th> <th>Avg Latency (s)</th> <th>Throughput (TPS)</th>
                                 </tr>
                                 <tr>
-                                     <td>logBeacons-140</td> <td>1320</td> <td>120</td> <td>144.9</td> <td>7.69</td> <td>0.28</td> <td>2.48</td> <td>91.8</td>
+                                     <td>logBeacons-140</td> <td>1536</td> <td>0</td> <td>145.6</td> <td>2.20</td> <td>0.09</td> <td>0.30</td> <td>120.9</td>
                                 </tr>
                             </table>
                         <h3>Resource utilization for logBeacons-140</h3>
@@ -184,7 +185,7 @@ workers:
   number: 96
 rounds:
   - label: logBeacons-140
-    txNumber: 1440
+    txDuration: 10
     rateControl:
       type: fixed-rate
       opts:
@@ -192,7 +193,7 @@ rounds:
     workload:
       module: workload&#x2F;logBeacons.js
       arguments:
-        operatorsPerWorker: 8
+        operatorsPerWorker: 176
         flightsPerOperator: 1
         beaconsPerLog: 120
         violationRate: 0.005

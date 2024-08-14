@@ -152,14 +152,15 @@
                     </tr>
 
                     <tr>
-                         <td>logBeacons-200</td> <td>1510</td> <td>506</td> <td>202.5</td> <td>13.07</td> <td>0.12</td> <td>5.18</td> <td>106.1</td>
+                         <td>logBeacons-200</td> <td>2112</td> <td>0</td> <td>203.6</td> <td>2.15</td> <td>0.13</td> <td>1.01</td> <td>168.7</td>
                     </tr>
                 </table>
             </div>
             <div style="border-bottom: 1px solid #d9d9d9; padding-bottom: 10px;" id="logBeacons-200">
                 <h2>Benchmark round: logBeacons-200</h2>
                 <p></p>
-                <pre style="overflow: visible;white-space: pre-wrap;max-height:100%;">rateControl:
+                <pre style="overflow: visible;white-space: pre-wrap;max-height:100%;">txDuration: 10
+rateControl:
   type: fixed-rate
   opts:
     tps: 200
@@ -170,7 +171,7 @@
                                      <th>Name</th> <th>Succ</th> <th>Fail</th> <th>Send Rate (TPS)</th> <th>Max Latency (s)</th> <th>Min Latency (s)</th> <th>Avg Latency (s)</th> <th>Throughput (TPS)</th>
                                 </tr>
                                 <tr>
-                                     <td>logBeacons-200</td> <td>1510</td> <td>506</td> <td>202.5</td> <td>13.07</td> <td>0.12</td> <td>5.18</td> <td>106.1</td>
+                                     <td>logBeacons-200</td> <td>2112</td> <td>0</td> <td>203.6</td> <td>2.15</td> <td>0.13</td> <td>1.01</td> <td>168.7</td>
                                 </tr>
                             </table>
                         <h3>Resource utilization for logBeacons-200</h3>
@@ -184,7 +185,7 @@ workers:
   number: 96
 rounds:
   - label: logBeacons-200
-    txNumber: 2016
+    txDuration: 10
     rateControl:
       type: fixed-rate
       opts:
@@ -192,7 +193,7 @@ rounds:
     workload:
       module: workload&#x2F;logBeacons.js
       arguments:
-        operatorsPerWorker: 8
+        operatorsPerWorker: 251
         flightsPerOperator: 1
         beaconsPerLog: 120
         violationRate: 0.005

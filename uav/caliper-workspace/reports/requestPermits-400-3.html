@@ -152,14 +152,15 @@
                     </tr>
 
                     <tr>
-                         <td>requestPermits-400</td> <td>1930</td> <td>2102</td> <td>395.3</td> <td>0.59</td> <td>0.23</td> <td>0.39</td> <td>378.7</td>
+                         <td>requestPermits-400</td> <td>4128</td> <td>0</td> <td>398.2</td> <td>12.80</td> <td>0.09</td> <td>6.74</td> <td>178.5</td>
                     </tr>
                 </table>
             </div>
             <div style="border-bottom: 1px solid #d9d9d9; padding-bottom: 10px;" id="requestPermits-400">
                 <h2>Benchmark round: requestPermits-400</h2>
                 <p></p>
-                <pre style="overflow: visible;white-space: pre-wrap;max-height:100%;">rateControl:
+                <pre style="overflow: visible;white-space: pre-wrap;max-height:100%;">txDuration: 10
+rateControl:
   type: fixed-rate
   opts:
     tps: 400
@@ -170,7 +171,7 @@
                                      <th>Name</th> <th>Succ</th> <th>Fail</th> <th>Send Rate (TPS)</th> <th>Max Latency (s)</th> <th>Min Latency (s)</th> <th>Avg Latency (s)</th> <th>Throughput (TPS)</th>
                                 </tr>
                                 <tr>
-                                     <td>requestPermits-400</td> <td>1930</td> <td>2102</td> <td>395.3</td> <td>0.59</td> <td>0.23</td> <td>0.39</td> <td>378.7</td>
+                                     <td>requestPermits-400</td> <td>4128</td> <td>0</td> <td>398.2</td> <td>12.80</td> <td>0.09</td> <td>6.74</td> <td>178.5</td>
                                 </tr>
                             </table>
                         <h3>Resource utilization for requestPermits-400</h3>
@@ -184,7 +185,7 @@ workers:
   number: 96
 rounds:
   - label: requestPermits-400
-    txNumber: 4032
+    txDuration: 10
     rateControl:
       type: fixed-rate
       opts:
@@ -192,7 +193,7 @@ rounds:
     workload:
       module: workload&#x2F;requestPermits.js
       arguments:
-        operatorsPerWorker: 8
+        operatorsPerWorker: 63
         boundariesPerPermit: 1
         verticesPerBoundary: 1
         facetsPerBoundary: 1

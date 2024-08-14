@@ -152,14 +152,15 @@
                     </tr>
 
                     <tr>
-                         <td>addOperators-100</td> <td>1056</td> <td>0</td> <td>105.6</td> <td>0.64</td> <td>0.15</td> <td>0.38</td> <td>104.0</td>
+                         <td>addOperators-100</td> <td>1152</td> <td>0</td> <td>103.4</td> <td>3.95</td> <td>0.08</td> <td>1.55</td> <td>86.7</td>
                     </tr>
                 </table>
             </div>
             <div style="border-bottom: 1px solid #d9d9d9; padding-bottom: 10px;" id="addOperators-100">
                 <h2>Benchmark round: addOperators-100</h2>
                 <p></p>
-                <pre style="overflow: visible;white-space: pre-wrap;max-height:100%;">rateControl:
+                <pre style="overflow: visible;white-space: pre-wrap;max-height:100%;">txDuration: 10
+rateControl:
   type: fixed-rate
   opts:
     tps: 100
@@ -170,7 +171,7 @@
                                      <th>Name</th> <th>Succ</th> <th>Fail</th> <th>Send Rate (TPS)</th> <th>Max Latency (s)</th> <th>Min Latency (s)</th> <th>Avg Latency (s)</th> <th>Throughput (TPS)</th>
                                 </tr>
                                 <tr>
-                                     <td>addOperators-100</td> <td>1056</td> <td>0</td> <td>105.6</td> <td>0.64</td> <td>0.15</td> <td>0.38</td> <td>104.0</td>
+                                     <td>addOperators-100</td> <td>1152</td> <td>0</td> <td>103.4</td> <td>3.95</td> <td>0.08</td> <td>1.55</td> <td>86.7</td>
                                 </tr>
                             </table>
                         <h3>Resource utilization for addOperators-100</h3>
@@ -184,7 +185,7 @@ workers:
   number: 96
 rounds:
   - label: addOperators-100
-    txNumber: 1056
+    txDuration: 10
     rateControl:
       type: fixed-rate
       opts:

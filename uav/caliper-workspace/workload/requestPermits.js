@@ -9,11 +9,13 @@ class RequestPermitsWorkload extends WorkloadModuleBase {
 
 	async initializeWorkloadModule(workerIndex, totalWorkers, roundIndex, roundArguments, sutAdapter, sutContext) {
 		await super.initializeWorkloadModule(workerIndex, totalWorkers, roundIndex, roundArguments, sutAdapter, sutContext);
-		this.I = new Array(this.totalWorkers).fill(0)
+		this.lastOperator = new Array(this.totalWorkers).fill(0)
+		this.lastFlight = new Array(this.totalWorkers * this.roundArguments.operatorsPerWorker).fill(0)
 
+		// Create operators
 		for (let operatorIndex = 0; operatorIndex < this.roundArguments.operatorsPerWorker; operatorIndex++) {
 			const operatorId = `${this.workerIndex}_${operatorIndex}`
-			// console.log(`Worker ${this.workerIndex}: Adding operator ${operatorId}`)
+			console.log(`Worker ${this.workerIndex}: Adding operator ${operatorId}`)
 			const requestAddOperator = {
 				contractId: this.roundArguments.contractId,
 				contractFunction: 'RecordsSC:AddOperator',
@@ -26,8 +28,11 @@ class RequestPermitsWorkload extends WorkloadModuleBase {
 	}
 
 	async submitTransaction() {
-		const operatorId = `${this.workerIndex}_${this.I[this.workerIndex] % this.roundArguments.operatorsPerWorker}`
-		const flightId = `${operatorId}_${this.I[this.workerIndex]}`
+		const operatorIndex = this.lastOperator[this.workerIndex]
+		const flightIndex = this.lastFlight[this.workerIndex * this.roundArguments.operatorsPerWorker + operatorIndex]
+		const operatorId = `${this.workerIndex}_${operatorIndex}`
+		const flightId = `${operatorId}_${flightIndex}`
+
 		const requestRequestPermit = {
 			contractId: this.roundArguments.contractId,
 			contractFunction: 'RecordsSC:RequestPermit',
@@ -36,17 +41,46 @@ class RequestPermitsWorkload extends WorkloadModuleBase {
 				operatorId,
 				flightId,
 				"",
-				"2023-09-21T00:00:00Z",
-				"2023-11-28T00:00:00Z",
+				"2024-01-01T00:00:00Z",
+				"2025-01-01T00:00:00Z",
 				"[[[-1,0,-1],[-1,0,1],[-1,8,-1],[-1,8,1],[1,0,-1],[1,0,1],[1,8,-1],[1,8,1]]]",
 				"[[[0,6,4],[0,2,6],[0,3,2],[0,1,3],[2,7,6],[2,3,7],[4,6,7],[4,7,5],[0,4,5],[0,5,1],[1,5,7],[1,7,3]]]",
 				"[true]"
 			],
 			readOnly: false
 		}
-		// console.log(`Worker ${this.workerIndex}: Requesting permit ${flightId}`)
+
+		this.lastOperator[this.workerIndex] = (this.lastOperator[this.workerIndex] + 1) % this.roundArguments.operatorsPerWorker
+		this.lastFlight[this.workerIndex * this.roundArguments.operatorsPerWorker + operatorIndex] += 1
+		console.log(`Worker ${this.workerIndex}: Requesting permit ${flightId}`)
 		await this.sutAdapter.sendRequests(requestRequestPermit)
-		this.I[this.workerIndex]++
+
+
+		// console.log(`Worker ${this.workerIndex}: Adding ${this.roundArguments.beaconsPerLog} logs for flightId ${flightId}`)
+		// await this.sutAdapter.sendRequests(request)
+
+
+		// const operatorId = `${this.workerIndex}_${this.lastFlight[this.workerIndex] % this.roundArguments.operatorsPerWorker}`
+		// const flightId = `${operatorId}_${this.lastFlight[this.workerIndex]}`
+		// const requestRequestPermit = {
+		// 	contractId: this.roundArguments.contractId,
+		// 	contractFunction: 'RecordsSC:RequestPermit',
+		// 	invokerIdentity: 'User1',
+		// 	contractArguments: [
+		// 		operatorId,
+		// 		flightId,
+		// 		"",
+		// 		"2024-01-01T00:00:00Z",
+		// 		"2025-01-01T00:00:00Z",
+		// 		"[[[-1,0,-1],[-1,0,1],[-1,8,-1],[-1,8,1],[1,0,-1],[1,0,1],[1,8,-1],[1,8,1]]]",
+		// 		"[[[0,6,4],[0,2,6],[0,3,2],[0,1,3],[2,7,6],[2,3,7],[4,6,7],[4,7,5],[0,4,5],[0,5,1],[1,5,7],[1,7,3]]]",
+		// 		"[true]"
+		// 	],
+		// 	readOnly: false
+		// }
+		// console.log(`Worker ${this.workerIndex}: Requesting permit ${flightId}`)
+		// await this.sutAdapter.sendRequests(requestRequestPermit)
+		// this.lastFlight[this.workerIndex]++
 	}
 
 	// async cleanupWorkloadModule() {
@@ -63,7 +97,7 @@ class RequestPermitsWorkload extends WorkloadModuleBase {
 	// 		await this.sutAdapter.sendRequests(requestDeleteOperator)
 	// 	}
 
-	// 	for (let i = 0; i < this.I[this.workerIndex]; i++) {
+	// 	for (let i = 0; i < this.lastFlight[this.workerIndex]; i++) {
 	// 		const operatorId = `${this.workerIndex}_${i % this.roundArguments.operatorsPerWorker}`
 	// 		const flightId = `${operatorId}_${i}`
 	// 		console.log(`Worker ${this.workerIndex}: Deleting flight ${flightId}`)

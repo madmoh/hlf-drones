@@ -12,7 +12,7 @@ test:
     workload:
       module: workload/requestPermits.js
       arguments:
-        operatorsPerWorker: 8
+        operatorsPerWorker: $OPERATORS_PER_WORKER
         boundariesPerPermit: 1
         verticesPerBoundary: 1
         facetsPerBoundary: 1

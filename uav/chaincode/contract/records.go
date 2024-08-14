@@ -190,7 +190,7 @@ func (c *RecordsSC) EvaluatePermit(ctx contractapi.TransactionContextInterface, 
 		return fmt.Errorf("failed to read from state. Error: %v", err)
 	}
 	if flightJSON == nil {
-		return fmt.Errorf("Flight %v does not exist", flightId)
+		return fmt.Errorf("Flight object %v is empty", flightId)
 	}
 	var flight Flight
 	err = json.Unmarshal(flightJSON, &flight)

@@ -236,30 +236,31 @@ func (c *FlightsSC) LogLanding(ctx contractapi.TransactionContextInterface, oper
 	if !exists {
 		return fmt.Errorf("Flight %v does not exist", flightId)
 	}
-	flightJSON, err := ctx.GetStub().GetState(flightId)
-	if err != nil {
-		return fmt.Errorf("failed to read from state. Error: %v", err)
-	}
-	if flightJSON == nil {
-		return fmt.Errorf("Flight %v does not exist", flightId)
-	}
-	var flight Flight
-	err = json.Unmarshal(flightJSON, &flight)
-	if err != nil {
-		return err
-	}
+	return ctx.GetStub().DelState(flightId) // To trace back check ledger
+	// flightJSON, err := ctx.GetStub().GetState(flightId)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to read from state. Error: %v", err)
+	// }
+	// if flightJSON == nil {
+	// 	return fmt.Errorf("Flight %v does not exist", flightId)
+	// }
+	// var flight Flight
+	// err = json.Unmarshal(flightJSON, &flight)
+	// if err != nil {
+	// 	return err
+	// }
 
-	flight.Status = "PENDING"
-	txTimestamp, err := ctx.GetStub().GetTxTimestamp()
-	if err != nil {
-		return fmt.Errorf("failed to get timestamp for receipt: %v", err)
-	}
-	flight.Landing = txTimestamp.AsTime()
-	flightJSON, err = json.Marshal(flight)
-	if err != nil {
-		return err
-	}
-	return ctx.GetStub().PutState(flightId, flightJSON)
+	// flight.Status = "PENDING"
+	// txTimestamp, err := ctx.GetStub().GetTxTimestamp()
+	// if err != nil {
+	// 	return fmt.Errorf("failed to get timestamp for receipt: %v", err)
+	// }
+	// flight.Landing = txTimestamp.AsTime()
+	// flightJSON, err = json.Marshal(flight)
+	// if err != nil {
+	// 	return err
+	// }
+	// return ctx.GetStub().PutState(flightId, flightJSON)
 }
 
 func (c *FlightsSC) GetFlight(ctx contractapi.TransactionContextInterface, key string) (*Flight, error) {

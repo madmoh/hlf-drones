@@ -12,7 +12,7 @@ test:
     workload:
       module: workload/logBeacons.js
       arguments:
-        operatorsPerWorker: 8
+        operatorsPerWorker: $OPERATORS_PER_WORKER
         flightsPerOperator: 1
         beaconsPerLog: 120
         violationRate: 0.005
