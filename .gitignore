@@ -1,3 +1,6 @@
-**/vendor/
+**/chaincode/vendor/
 **/fabric-samples/
-**/node_modules/
+**/caliper-workspace/node_modules
+**/caliper-workspace/bun.lockb
+**/caliper-workspace/benchmarks/temp.yaml
+**/caliper-workspace/reports*
